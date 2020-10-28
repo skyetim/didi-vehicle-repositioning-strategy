@@ -91,7 +91,10 @@ def cruise_time(zone, t):
     -----
     Use average.
     """
-    raise NotImplementedError()
+    lookup_table = pd.read_csv('../data/cruise_time_15m.csv')
+    return lookup_table.loc[(lookup_table['dropoff_datetime_index'] == t) & 
+                            (lookup_table['taxizone_id'] == zone), 'med_cruise_time']
+#     raise NotImplementedError()
 
 
 # placeholder
