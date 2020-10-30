@@ -20,9 +20,23 @@ def trip_fare(src, dst, t):
     -----
     Use average.
     """
-    raise NotImplementedError()
+    #raise NotImplementedError()
+    
+    match = pd.read_csv('../Capstone/csv/fare_amount_scr_dst_t.csv') 
+    if (isinstance(src, (list, tuple, np.ndarray))==False):
+        src = [src]
+        dst = [dst]
+        t = [t]
+    m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (match['dropoff_taxizone_id'].isin(dst))]
+    m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
+    
+    if m.shape[0] == 0:
+        return -1
+    else:
+        return m.values
 
 
+    
 # TODO: ty & xx
 def trip_distance(src, dst):
     """compute trip distance between two taxi zones.
@@ -43,7 +57,19 @@ def trip_distance(src, dst):
     -----
     Use average.
     """
-    raise NotImplementedError()
+    #raise NotImplementedError()
+    
+    match = pd.read_csv('../Capstone/csv/trip_distance_scr_dst.csv') 
+    if (isinstance(src, (list, tuple, np.ndarray))==False):
+        src = [src]
+        dst = [dst]
+        t = [t]
+    m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (match['dropoff_taxizone_id'].isin(dst)), 'mean']
+    
+    if m.shape[0] == 0:
+        return -1
+    else:
+        return m.values
 
 
 # TODO: ty & xx
@@ -68,7 +94,21 @@ def trip_time(src, dst, t):
     -----
     Use average.
     """
-    raise NotImplementedError()
+    #raise NotImplementedError()
+    
+    match = pd.read_csv('../Capstone/csv/trip_time_scr_dst_t.csv') 
+    if (isinstance(src, (list, tuple, np.ndarray))==False):
+        src = [src]
+        dst = [dst]
+        t = [t]
+    m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (match['dropoff_taxizone_id'].isin(dst))]
+    m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
+    
+    if m.shape[0] == 0:
+        return -1
+    else:
+        return m.values
+    
 
 
 # TODO: yy & bo
