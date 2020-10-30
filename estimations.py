@@ -22,7 +22,7 @@ def trip_fare(src, dst, t):
     """
     #raise NotImplementedError()
     
-    match = pd.read_csv('../Capstone/csv/fare_amount_scr_dst_t.csv') 
+    match = pd.read_csv('../data/fare_amount_scr_dst_t.csv') 
     if (isinstance(src, (list, tuple, np.ndarray))==False):
         src = [src]
         dst = [dst]
@@ -59,7 +59,7 @@ def trip_distance(src, dst):
     """
     #raise NotImplementedError()
     
-    match = pd.read_csv('../Capstone/csv/trip_distance_scr_dst.csv') 
+    match = pd.read_csv('../data/trip_distance_scr_dst.csv') 
     if (isinstance(src, (list, tuple, np.ndarray))==False):
         src = [src]
         dst = [dst]
@@ -96,7 +96,7 @@ def trip_time(src, dst, t):
     """
     #raise NotImplementedError()
     
-    match = pd.read_csv('../Capstone/csv/trip_time_scr_dst_t.csv') 
+    match = pd.read_csv('../data/trip_time_scr_dst_t.csv') 
     if (isinstance(src, (list, tuple, np.ndarray))==False):
         src = [src]
         dst = [dst]
