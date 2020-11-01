@@ -59,4 +59,14 @@ def is_adjacent(src, dst):
     -------
     bool
     """
-    raise NotImplementedError()
+    #raise NotImplementedError()
+    
+    ad = pd.read_csv('../data/adjacent_zone.csv')
+    if dst<src:
+        a = dst
+        b = src
+        r = ad.loc[(ad.zone1 == a)&(ad.zone2 == b)]
+    else:
+        r = ad.loc[(ad.zone1 == src)&(ad.zone2 == dst)]
+    
+    return (len(r)>0)
