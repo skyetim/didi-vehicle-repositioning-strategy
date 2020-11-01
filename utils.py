@@ -30,4 +30,19 @@ def timestamp_to_env_time(ts, delta_t=15, t0=0):
     else:
         raise NotImplementedError('`delta_t` other 15 mins and 60 mins is not yet implemented.')
 
+# TODO: ty & xx
+def is_adjacent(src, dst):
+    """is two taxi zones adjacent.
+
+    Parameters
+    ----------
+    src : int
+        taxi zone 1
+    dst : int
+        taxi zone 2
+
+    Returns
+    -------
+    bool
+    """
     raise NotImplementedError()

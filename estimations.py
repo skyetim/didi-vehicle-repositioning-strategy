@@ -160,3 +160,21 @@ def cruise_distance(zone, t):
     """
     raise NotImplementedError()
 
+
+# ty & xx
+def generate_request(zone, t):
+    """generate a random request in `zone` at time t
+
+    Parameters
+    ----------
+    zone : int
+        taxi zone id
+    t : int
+        time
+
+    Returns
+    -------
+    int
+        dst taxi zone
+    """
+    raise NotImplementedError()
