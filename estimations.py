@@ -1,3 +1,7 @@
+import pandas as pd
+import numpy as np
+
+
 # TODO: ty & xx
 def trip_fare(src, dst, t):
     """compute trip fare between two taxi zones at time t.
@@ -20,23 +24,21 @@ def trip_fare(src, dst, t):
     -----
     Use average.
     """
-    #raise NotImplementedError()
-    
-    match = pd.read_csv('../data/fare_amount_scr_dst_t.csv') 
-    if (isinstance(src, (list, tuple, np.ndarray))==False):
+
+    match = pd.read_csv('../data/fare_amount_scr_dst_t.csv')
+    if (not isinstance(src, (list, tuple, np.ndarray))):
         src = [src]
         dst = [dst]
         t = [t]
     m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (match['dropoff_taxizone_id'].isin(dst))]
     m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
-    
+
     if m.shape[0] == 0:
         return -1
     else:
         return m.values
 
 
-    
 # TODO: ty & xx
 def trip_distance(src, dst):
     """compute trip distance between two taxi zones.
@@ -57,15 +59,13 @@ def trip_distance(src, dst):
     -----
     Use average.
     """
-    #raise NotImplementedError()
-    
-    match = pd.read_csv('../data/trip_distance_scr_dst.csv') 
-    if (isinstance(src, (list, tuple, np.ndarray))==False):
+    match = pd.read_csv('../data/trip_distance_scr_dst.csv')
+    if (not isinstance(src, (list, tuple, np.ndarray))):
         src = [src]
         dst = [dst]
         t = [t]
     m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (match['dropoff_taxizone_id'].isin(dst)), 'mean']
-    
+
     if m.shape[0] == 0:
         return -1
     else:
@@ -94,21 +94,18 @@ def trip_time(src, dst, t):
     -----
     Use average.
     """
-    #raise NotImplementedError()
-    
-    match = pd.read_csv('../data/trip_time_scr_dst_t.csv') 
-    if (isinstance(src, (list, tuple, np.ndarray))==False):
+    match = pd.read_csv('../data/trip_time_scr_dst_t.csv')
+    if (not isinstance(src, (list, tuple, np.ndarray))):
         src = [src]
         dst = [dst]
         t = [t]
     m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (match['dropoff_taxizone_id'].isin(dst))]
     m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
-    
+
     if m.shape[0] == 0:
         return -1
     else:
         return m.values
-    
 
 
 # TODO: yy & bo
@@ -131,15 +128,14 @@ def cruise_time(zone, t):
     -----
     Use average.
     """
-    lookup_table = pd.read_csv('../data/cruise_time_15m.csv') ##only implemented for 15 mins
+    lookup_table = pd.read_csv('../data/cruise_time_15m.csv')  # only implemented for 15 mins
 
-    q = lookup_table.loc[(lookup_table['dropoff_datetime_index'] == t) & 
-                                (lookup_table['taxizone_id'] == zone), 'med_cruise_time']
+    q = lookup_table.loc[(lookup_table['dropoff_datetime_index'] == t) & (lookup_table['taxizone_id'] == zone),
+                         'med_cruise_time']
     if q.shape[0] == 0:
         return 1000
     else:
         return q.values
-#     raise NotImplementedError()
 
 
 # placeholder
@@ -163,3 +159,4 @@ def cruise_distance(zone, t):
     Use average.
     """
     raise NotImplementedError()
+

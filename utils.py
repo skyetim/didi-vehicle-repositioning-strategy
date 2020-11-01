@@ -1,5 +1,4 @@
 # TODO: yy & bo
-
 def timestamp_to_env_time(ts, delta_t=15, t0=0):
     """transform timestamp(s) to Environment time
 
@@ -18,15 +17,17 @@ def timestamp_to_env_time(ts, delta_t=15, t0=0):
         transformed environment time
     """
     import pandas as pd
-    
+
     index_conversion_table = pd.read_csv('data/interval_index_table_0.csv')
     if t=15:
         rounded_q_time = pd.Series(pd.to_datetime(ts)).dt.round('15min').dt.time.values
-        return np.array([index_conversion_table.loc[index_conversion_table['interval'] == q]['index_15m'][0]\
+        return np.array([index_conversion_table.loc[index_conversion_table['interval'] == q]['index_15m'][0]
                         for q in rounded_q_time]) 
     elif t=60:
         rounded_q_time = pd.Series(pd.to_datetime(ts)).dt.round('60min').dt.time.values
-        return np.array([index_conversion_table.loc[index_conversion_table['interval'] == q]['index_60m'][0]\
+        return np.array([index_conversion_table.loc[index_conversion_table['interval'] == q]['index_60m'][0]
                         for q in rounded_q_time])
     else:
-         raise NotImplementedError()
+        raise NotImplementedError('`delta_t` other 15 mins and 60 mins is not yet implemented.')
+
+    raise NotImplementedError()
