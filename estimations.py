@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from random import choices
 
 
 # TODO: ty & xx
@@ -176,4 +177,11 @@ def generate_request(zone, t):
     int
         dst taxi zone
     """
-    raise NotImplementedError()
+    mc_mtx_2d = np.loadtxt("../data/mc_mtx.txt") 
+    mc_mtx = mc_mtx_2d.reshape( 
+        mc_mtx_2d.shape[0], mc_mtx_2d.shape[1] // 263, 263) #convert back to 3d array
+    
+    population = np.arange(1, 264)
+    weights = mc_mtx[t,zone-1,:] #index starts from 0, zone starts from 1
+    dst = choices(population, weights)[0]
+    return dst
