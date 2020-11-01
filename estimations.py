@@ -63,7 +63,6 @@ def trip_distance(src, dst):
     if (not isinstance(src, (list, tuple, np.ndarray))):
         src = [src]
         dst = [dst]
-        t = [t]
     m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (match['dropoff_taxizone_id'].isin(dst)), 'mean']
 
     if m.shape[0] == 0:
