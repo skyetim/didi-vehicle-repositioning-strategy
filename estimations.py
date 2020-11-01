@@ -183,5 +183,11 @@ def generate_request(zone, t):
     
     population = np.arange(1, 264)
     weights = mc_mtx[t,zone-1,:] #index starts from 0, zone starts from 1
-    dst = choices(population, weights)[0]
+    
+    if (weights == np.zeros((1, 263))).all():
+        uniform = np.full((263,1), 1/263)
+        dst = choices(population, uniform)[0]
+    else:
+        dst = choices(population, weights)[0]
+
     return dst
