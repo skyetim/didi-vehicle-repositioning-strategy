@@ -162,11 +162,29 @@ def cruise_distance(zone, t):
 
 
 # ty & xx
-def generate_request(zone, t):
+def generate_request_load_data():
+    """load the Marcov Chain Transition Matrix for generating a random request in `zone` at time t
+
+    Returns
+    -------
+    np 3d array
+        the Marcov Chain Transition Matrix
+    """
+    zone_num = 263
+    mc_mtx_2d = np.loadtxt("../data/mc_mtx.txt") 
+    mc_mtx = mc_mtx_2d.reshape( 
+        mc_mtx_2d.shape[0], mc_mtx_2d.shape[1] // zone_num, zone_num) #convert back to 3d array
+
+    return mc_mtx
+
+# ty & xx
+def generate_request(data, zone, t):
     """generate a random request in `zone` at time t
 
     Parameters
     ----------
+    data: np 3d array
+        the Marcov Chain Transition Matrix
     zone : int
         taxi zone id
     t : int
@@ -177,15 +195,14 @@ def generate_request(zone, t):
     int
         dst taxi zone
     """
-    mc_mtx_2d = np.loadtxt("../data/mc_mtx.txt") 
-    mc_mtx = mc_mtx_2d.reshape( 
-        mc_mtx_2d.shape[0], mc_mtx_2d.shape[1] // 263, 263) #convert back to 3d array
+    zone_num = 263
+    mc_mtx = data
     
-    population = np.arange(1, 264)
+    population = np.arange(1, zone_num+1)
     weights = mc_mtx[t,zone-1,:] #index starts from 0, zone starts from 1
     
-    if (weights == np.zeros((1, 263))).all():
-        uniform = np.full((263,1), 1/263)
+    if (weights == np.zeros((1, zone_num))).all():
+        uniform = np.full((zone_num,1), 1/zone_num)
         dst = choices(population, uniform)[0]
     else:
         dst = choices(population, weights)[0]
