@@ -10,7 +10,7 @@ class NYCEnv(gym.Env):
         self.NUM_TAXI_ZONES = 10
         self.SHIFT_START_TIME = 0
         self.SHIFT_DURATION = 10
-        self.FUEL_UNIT_PRICE = .1
+        self.FUEL_UNIT_PRICE = .125
         self.action_space = spaces.Discrete(self.NUM_TAXI_ZONES + 1)
         self.observation_space = spaces.Box(
             low=np.array([1, self.SHIFT_START_TIME]),
