@@ -3,3 +3,4 @@ notebooks/.ipynb_checkpoints/*
 syllabus/
 .DS_Store
 .vscode/settings.json
+__pycache__/
