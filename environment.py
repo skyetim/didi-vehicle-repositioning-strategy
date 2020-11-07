@@ -1,8 +1,8 @@
 import numpy as np
 import gym
 from gym import spaces
-from utils import (is_adjacent, cruise_time, trip_time, generate_request, trip_fare, trip_distance,
-                   generate_request_load_data)
+from estimations import (cruise_time, trip_time, generate_request, trip_fare, trip_distance, generate_request_load_data)
+from utils import is_adjacent
 
 
 class NYCEnv(gym.Env):
