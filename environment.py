@@ -1,7 +1,8 @@
 import numpy as np
 import gym
 from gym import spaces
-from utils import is_adjacent, cruise_time, trip_time, generate_request, trip_fare, trip_distance
+from utils import (is_adjacent, cruise_time, trip_time, generate_request, trip_fare, trip_distance,
+                   generate_request_load_data)
 
 
 class NYCEnv(gym.Env):
@@ -17,6 +18,7 @@ class NYCEnv(gym.Env):
             high=np.array([self.NUM_TAXI_ZONES, self.SHIFT_START_TIME + self.SHIFT_DURATION]),
             dtype=np.int8,
         )
+        self._load_data()
 
     def step(self, action):
         if action == 0:
@@ -53,7 +55,7 @@ class NYCEnv(gym.Env):
         info = {}
         if self._check_done():
             return np.array([self.current_taxi_zone, self.current_time]), 0, True, info
-        dst = generate_request(self.current_taxi_zone, self.current_time)
+        dst = generate_request(self.request_transition_matrix, sself.current_taxi_zone, self.current_time)
         self.current_time += trip_time(self.current_taxi_zone, dst, self.current_time)
         reward = trip_fare(self.current_taxi_zone, dst, self.current_time)
         reward -= self.FUEL_UNIT_PRICE * trip_distance(self.current_taxi_zone, dst, self.current_time)
@@ -68,8 +70,11 @@ class NYCEnv(gym.Env):
         return np.array([self.current_taxi_zone, self.SHIFT_START_TIME + self.SHIFT_DURATION]), reward, True, info
 
     def _cruise_to_adjacent_taxi_zone(self, action):
-        reward = - self.FUEL_UNIT_PRICE * trip_distance(self.current_taxi_zone, action)
+        reward = -self.FUEL_UNIT_PRICE * trip_distance(self.current_taxi_zone, action)
         info = {}
         self.current_taxi_zone = action
         self.current_time += trip_time(self.current_taxi_zone, action)
         return np.array([self.current_taxi_zone, self.current_time]), reward, self._check_done(), info
+
+    def _load_data(self):
+        self.request_transition_matrix = generate_request_load_data()
