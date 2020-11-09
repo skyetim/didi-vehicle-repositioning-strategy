@@ -7,14 +7,15 @@ from datetime import datetime
 
 class estimation:
     
-    def __init__(self):
-        self.data_fare = pd.read_csv('fare_amount_src_dst_t.csv')
-        self.data_distance = pd.read_csv('trip_distance_src_dst.csv')
-        self.data_time = pd.read_csv('trip_time_src_dst_t.csv')
-        self.data_cruise15 = pd.read_csv('cruise_time_15m.csv')
-        self.data_mc2d = np.loadtxt("mc_mtx.txt")
-        self.data_index = pd.read_csv('interval_index_table_0.csv')
-        self.data_adjacent = pd.read_csv('adjacent_zone.csv')
+    def __init__(self, dir_path=''):
+        self.data_fare = pd.read_csv(dir_path + 'fare_amount_src_dst_t.csv')
+        self.data_distance = pd.read_csv(dir_path + 'trip_distance_src_dst.csv')
+        self.data_time = pd.read_csv(dir_path + 'trip_time_src_dst_t.csv')
+        self.data_cruise15 = pd.read_csv(dir_path + 'cruise_time_15m.csv')
+        self.data_mc2d = np.loadtxt(dir_path + "mc_mtx.txt")
+        self.data_index = pd.read_csv(dir_path + 'interval_index_table_0.csv')
+        self.data_index['interval'] = pd.to_datetime(self.data_index['interval']).dt.time
+        self.data_adjacent = pd.read_csv(dir_path + 'adjacent_zone.csv')
         
         
     def trip_fare(self, src, dst, t):
@@ -129,14 +130,16 @@ class estimation:
         -----
         Use average.
         """
+        ### NOT VECTORIZED
+        t_interval = 15
         lookup_table = self.data_cruise15  # only implemented for 15 mins
     
         q = lookup_table.loc[(lookup_table['dropoff_datetime_index'] == t) & (lookup_table['taxizone_id'] == zone),
-                             'med_cruise_time']
+                             'med_cruise_time_INT']
         if q.shape[0] == 0:
-            return 1000
+            return 1000//t_interval
         else:
-            return q.values
+            return q.values[0]
     
     
     # placeholder
@@ -218,9 +221,9 @@ class estimation:
 
         ts = pd.Series(pd.to_datetime(ts))
         
-        ## convert string to pd.datetime
+        ## convert string to pd.datetime [move to __init__]
         index_conversion_table = self.data_index
-        index_conversion_table['interval'] = pd.to_datetime(index_conversion_table['interval']).dt.time
+#         index_conversion_table['interval'] = pd.to_datetime(index_conversion_table['interval']).dt.time
         
         if delta_t==15:
             rounded_q_time = ts.dt.round('15min').dt.time.values
@@ -233,8 +236,10 @@ class estimation:
         else:
             raise NotImplementedError('delta_t other 15 mins and 60 mins is not yet implemented.')
         
+        ## Handle when the time does not start at 12:00am
         if t0 != 0:
             env_time = np.array([i+24 if i<0 else i for i in (env_time - t0)])
+        
         return env_time
     
     
