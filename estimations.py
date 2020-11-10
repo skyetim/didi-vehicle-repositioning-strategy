@@ -110,7 +110,7 @@ class estimation:
         if m.shape[0] == 0:
             return -1
         else:
-            return m.values
+            return [round(1.0*z/15) for z in m.values]
     
     
     # TODO: yy & bo
