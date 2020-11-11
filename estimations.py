@@ -3,7 +3,7 @@ import numpy as np
 from random import choices
 
 
-class Estimation:
+class Estimator:
 
     def __init__(self, dir_path=''):
         self.data_fare = pd.read_csv(dir_path + 'fare_amount_src_dst_t.csv')
