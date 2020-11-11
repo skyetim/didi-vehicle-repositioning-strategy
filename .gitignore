@@ -4,3 +4,4 @@ syllabus/
 .DS_Store
 .vscode/settings.json
 __pycache__/
+.ipynb_checkpoints/
