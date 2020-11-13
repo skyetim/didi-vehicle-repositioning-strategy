@@ -9,8 +9,8 @@ class NYCEnv(gym.Env):
     def __init__(self):
         super(NYCEnv, self).__init__()
         self.NUM_TAXI_ZONES = 263
-        self.SHIFT_START_TIME = 0
-        self.SHIFT_DURATION = 10
+        self.SHIFT_START_TIME = 32
+        self.SHIFT_DURATION = 64
         self.FUEL_UNIT_PRICE = .125
         self.action_space = spaces.Discrete(self.NUM_TAXI_ZONES + 1)
         self.observation_space = spaces.Box(
@@ -69,7 +69,7 @@ class NYCEnv(gym.Env):
         return np.array([self.current_taxi_zone, self.current_time]), reward, self._check_done(), info
 
     def _fly(self):
-        reward = -float('inf')
+        reward = -10000
         info = {}
         self.total_rewards += reward
         return np.array([self.current_taxi_zone, self.SHIFT_START_TIME + self.SHIFT_DURATION]), reward, True, info
