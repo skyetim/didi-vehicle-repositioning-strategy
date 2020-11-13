@@ -40,14 +40,22 @@ class Estimator:
             src = [src]
             dst = [dst]
             t = [t]
-        m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
+            m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
                       (match['dropoff_taxizone_id'].isin(dst))]
-        m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
-
-        if m.shape[0] == 0:
-            return -1
+            m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
+            if m.shape[0] == 0:
+                result = -1
+            else:
+                result = m.values[0]
         else:
-            return m.values
+            m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
+                      (match['dropoff_taxizone_id'].isin(dst))]
+            m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
+            if m.shape[0] == 0:
+                result = -1
+            else:
+                result = m.values
+        return result
 
     # TODO: ty & xx
 
@@ -71,13 +79,21 @@ class Estimator:
         if (not isinstance(src, (list, tuple, np.ndarray))):
             src = [src]
             dst = [dst]
-        m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (
-            match['dropoff_taxizone_id'].isin(dst)), 'mean']
-
-        if m.shape[0] == 0:
-            return -1
+            m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (
+                match['dropoff_taxizone_id'].isin(dst)), 'mean']
+            if m.shape[0] == 0:
+                result = -1
+            else:
+                result = m.values[0]
         else:
-            return m.values
+            m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (
+                match['dropoff_taxizone_id'].isin(dst)), 'mean']
+            if m.shape[0] == 0:
+                result = -1
+            else:
+                result = m.values
+        return result
+    
 
     # TODO: ty & xx
 
@@ -104,14 +120,22 @@ class Estimator:
             src = [src]
             dst = [dst]
             t = [t]
-        m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
+            m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
                       (match['dropoff_taxizone_id'].isin(dst))]
-        m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
-
-        if m.shape[0] == 0:
-            return -1
+            m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
+            if m.shape[0] == 0:
+                result = -1
+            else:
+                 result = int(round(1.0*m.values[0]/15)) 
         else:
-            return [round(1.0*z/15) for z in m.values]
+            m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
+                      (match['dropoff_taxizone_id'].isin(dst))]
+            m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
+            if m.shape[0] == 0:
+                result = -1
+            else:
+                 result = [int(round(1.0*z/15)) for z in m.values]
+        return result
 
     # TODO: yy & bo
 
