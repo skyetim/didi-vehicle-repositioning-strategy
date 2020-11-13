@@ -265,8 +265,11 @@ class Estimator:
         # Handle when the time does not start at 12:00am
         if t0 != 0:
             env_time = np.array([i+24 if i < 0 else i for i in (env_time - t0)])
-
-        return env_time
+        
+        if len(env_time) == 1:
+            return env_time[0]
+        else:
+            return env_time
 
     # TODO: ty & xx
 
