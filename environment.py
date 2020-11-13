@@ -2,7 +2,6 @@ import numpy as np
 import gym
 from gym import spaces
 from estimations import Estimator
-from utils import is_adjacent
 
 
 class NYCEnv(gym.Env):
@@ -40,9 +39,7 @@ class NYCEnv(gym.Env):
         if mode != 'console':
             return NotImplementedError('Mode other than console is not yet implemented.')
         print(
-            f'Current taxi zone: {self.current_taxi_zone}, \
-              current time: {self.current_time}, \
-              current reward: {self.total_rewards}'
+            f'Current taxi zone: {self.current_taxi_zone}, current time: {self.current_time}, current reward: {self.total_rewards}'
         )
 
     def _check_done(self):
@@ -58,10 +55,8 @@ class NYCEnv(gym.Env):
         info = {}
         if self._check_done():
             return np.array([self.current_taxi_zone, self.current_time]), 0, True, info
-        dst = self.estimator.generate_request(self.request_transition_matrix,
-                                              self.current_taxi_zone, self.current_time)
-        self.current_time += self.estimator.trip_time(self.current_taxi_zone,
-                                                      dst, self.current_time)
+        dst = self.estimator.generate_request(self.current_taxi_zone, self.current_time)
+        self.current_time += self.estimator.trip_time(self.current_taxi_zone, dst, self.current_time)
         reward = self.estimator.trip_fare(self.current_taxi_zone, dst, self.current_time)
         reward -= self.FUEL_UNIT_PRICE * self.estimator.trip_distance(self.current_taxi_zone, dst, self.current_time)
         self.current_taxi_zone = dst
@@ -78,5 +73,5 @@ class NYCEnv(gym.Env):
         reward = -self.FUEL_UNIT_PRICE * self.estimator.trip_distance(self.current_taxi_zone, action)
         info = {}
         self.current_taxi_zone = action
-        self.current_time += self.estimator.trip_time(self.current_taxi_zone, action)
+        self.current_time += self.estimator.trip_time(self.current_taxi_zone, action, self.current_time)
         return np.array([self.current_taxi_zone, self.current_time]), reward, self._check_done(), info
