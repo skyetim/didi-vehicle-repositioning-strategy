@@ -11,6 +11,7 @@ class NYCEnv(gym.Env):
         self.SHIFT_START_TIME = 32
         self.SHIFT_DURATION = 64
         self.FUEL_UNIT_PRICE = .125
+        self.TERMINATE_PENALTY = -10000
         self.action_space = spaces.Discrete(self.NUM_TAXI_ZONES + 1)
         self.observation_space = spaces.Box(
             low=np.array([1, self.SHIFT_START_TIME]),
@@ -39,7 +40,7 @@ class NYCEnv(gym.Env):
         if mode != 'console':
             return NotImplementedError('Mode other than console is not yet implemented.')
         print(
-            f'Current taxi zone: {self.current_taxi_zone}, current time: {self.current_time}, current reward: {self.total_rewards}'
+            f'Current taxi zone: {self.current_taxi_zone}, time: {self.current_time}, reward: {self.total_rewards:.2f}'
         )
 
     def _check_done(self):
@@ -64,7 +65,7 @@ class NYCEnv(gym.Env):
         return np.array([self.current_taxi_zone, self.current_time]), reward, self._check_done(), info
 
     def _fly(self):
-        reward = -10000
+        reward = self.TERMINATE_PENALTY
         info = {}
         self.total_rewards += reward
         return np.array([self.current_taxi_zone, self.SHIFT_START_TIME + self.SHIFT_DURATION]), reward, True, info
