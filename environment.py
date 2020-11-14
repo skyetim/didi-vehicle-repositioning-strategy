@@ -59,7 +59,7 @@ class NYCEnv(gym.Env):
         dst = self.estimator.generate_request(self.current_taxi_zone, self.current_time)
         self.current_time += self.estimator.trip_time(self.current_taxi_zone, dst, self.current_time)
         reward = self.estimator.trip_fare(self.current_taxi_zone, dst, self.current_time)
-        reward -= self.FUEL_UNIT_PRICE * self.estimator.trip_distance(self.current_taxi_zone, dst, self.current_time)
+        reward -= self.FUEL_UNIT_PRICE * self.estimator.trip_distance(self.current_taxi_zone, dst)
         self.current_taxi_zone = dst
         self.total_rewards += reward
         return np.array([self.current_taxi_zone, self.current_time]), reward, self._check_done(), info
@@ -68,7 +68,8 @@ class NYCEnv(gym.Env):
         reward = self.TERMINATE_PENALTY
         info = {}
         self.total_rewards += reward
-        return np.array([self.current_taxi_zone, self.SHIFT_START_TIME + self.SHIFT_DURATION]), reward, True, info
+        self.current_time += self.SHIFT_DURATION
+        return np.array([self.current_taxi_zone, self.current_time]), reward, True, info
 
     def _cruise_to_adjacent_taxi_zone(self, action):
         reward = -self.FUEL_UNIT_PRICE * self.estimator.trip_distance(self.current_taxi_zone, action)
