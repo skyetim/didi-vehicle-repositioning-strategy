@@ -158,7 +158,7 @@ class Estimator:
         """
         # NOT VECTORIZED
         t_interval = 15
-        lookup_table = self.data_cruise15  # only implemented for 15 mins
+        lookup_table = self.data_cruise
 
         q = lookup_table.loc[(lookup_table['dropoff_datetime_index'] == t) & (lookup_table['taxizone_id'] == zone),
                              'med_cruise_time_INT']
