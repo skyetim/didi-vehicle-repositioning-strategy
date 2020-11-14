@@ -41,7 +41,7 @@ class Estimator:
             dst = [dst]
             t = [t]
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                      (match['dropoff_taxizone_id'].isin(dst))]
+                          (match['dropoff_taxizone_id'].isin(dst))]
             m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
             if m.shape[0] == 0:
                 result = -1
@@ -49,7 +49,7 @@ class Estimator:
                 result = m.values[0]
         else:
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                      (match['dropoff_taxizone_id'].isin(dst))]
+                          (match['dropoff_taxizone_id'].isin(dst))]
             m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
             if m.shape[0] == 0:
                 result = -1
@@ -93,7 +93,6 @@ class Estimator:
             else:
                 result = m.values
         return result
-    
 
     # TODO: ty & xx
 
@@ -121,20 +120,20 @@ class Estimator:
             dst = [dst]
             t = [t]
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                      (match['dropoff_taxizone_id'].isin(dst))]
+                          (match['dropoff_taxizone_id'].isin(dst))]
             m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
             if m.shape[0] == 0:
                 result = -1
             else:
-                 result = int(round(1.0*m.values[0]/15)) 
+                result = int(round(1.0*m.values[0]/15))
         else:
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                      (match['dropoff_taxizone_id'].isin(dst))]
+                          (match['dropoff_taxizone_id'].isin(dst))]
             m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
             if m.shape[0] == 0:
                 result = -1
             else:
-                 result = [int(round(1.0*z/15)) for z in m.values]
+                result = [int(round(1.0*z/15)) for z in m.values]
         return result
 
     # TODO: yy & bo
@@ -203,7 +202,6 @@ class Estimator:
         int
             dst taxi zone
         """
-
         zone_num = 263
         mc_mtx_2d = self.data_mc2d
         # convert back to 3d array
@@ -255,19 +253,7 @@ class Estimator:
         round_time = '{}min'.format(int(delta_t))
         rounded_q_time = ts.dt.round(round_time).dt.time.values
         env_time = np.array([index_conversion_table.loc[index_conversion_table['interval'] == q][time_index_col].values[0] for q in rounded_q_time])
-        
-#         if delta_t == 15:
-#             rounded_q_time = ts.dt.round('15min').dt.time.values
-#             env_time = np.array([index_conversion_table.loc[index_conversion_table['interval'] == q]['index_15m'].values[0]
-#                                  for q in rounded_q_time])
-#         elif delta_t == 60:
-#             rounded_q_time = pd.Series(pd.to_datetime(
-#                 ts)).dt.round('60min').dt.time.values
-#             env_time = np.array([index_conversion_table.loc[index_conversion_table['interval'] == q]['index_60m'].values[0]
-#                                  for q in rounded_q_time])
-#         else:
-#             raise NotImplementedError(
-#                 'delta_t other 15 mins and 60 mins is not yet implemented.')
+
 
         # Handle when the time does not start at 12:00am
         if t0 != 0:
