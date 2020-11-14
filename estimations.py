@@ -5,16 +5,18 @@ from random import choices
 
 class Estimator:
 
-    def __init__(self, dir_path=''):
+    def __init__(self, delta_t, dir_path=''):
+        self.delta_t = delta_t
         self.data_fare = pd.read_csv(dir_path + 'fare_amount_src_dst_t.csv')
         self.data_distance = pd.read_csv(dir_path + 'trip_distance_src_dst.csv')
         self.data_time = pd.read_csv(dir_path + 'trip_time_src_dst_t.csv')
-        self.data_cruise15 = pd.read_csv(dir_path + 'cruise_time_15m.csv')
+        self.data_cruise = pd.read_csv(dir_path + 'cruise_time_{}m.csv'.format(int(delta_t)))
         self.data_mc2d = np.loadtxt(dir_path + "mc_mtx.txt")
         self.data_index = pd.read_csv(dir_path + 'interval_index_table_0.csv')
         self.data_index['interval'] = pd.to_datetime(
             self.data_index['interval']).dt.time
         self.data_adjacent = pd.read_csv(dir_path + 'adjacent_zone.csv')
+        
 
     def trip_fare(self, src, dst, t):
         """compute trip fare between two taxi zones at time t.
@@ -222,7 +224,7 @@ class Estimator:
 
     # TODO: yy & bo
 
-    def timestamp_to_env_time(self, ts, delta_t=15, t0=0):
+    def timestamp_to_env_time(self, ts, t0=0):
         """transform timestamp(s) to Environment time
         Parameters
         ----------
@@ -249,8 +251,8 @@ class Estimator:
         index_conversion_table = self.data_index
 #         index_conversion_table['interval'] = pd.to_datetime(index_conversion_table['interval']).dt.time
 
-        time_index_col = 'time_index_{}m'.format(int(delta_t))
-        round_time = '{}min'.format(int(delta_t))
+        time_index_col = 'time_index_{}m'.format(int(self.delta_t))
+        round_time = '{}min'.format(int(self.delta_t))
         rounded_q_time = ts.dt.round(round_time).dt.time.values
         env_time = np.array([index_conversion_table.loc[index_conversion_table['interval'] == q][time_index_col].values[0] for q in rounded_q_time])
 
