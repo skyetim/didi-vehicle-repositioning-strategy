@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from random import choices
+import scipy.sparse
 
 
 class Estimator:
@@ -11,7 +12,7 @@ class Estimator:
         self.data_distance = pd.read_csv(dir_path + 'trip_distance_src_dst.csv')
         self.data_time = pd.read_csv(dir_path + f'trip_time_src_dst_t_{delta_t}.csv')
         self.data_cruise = pd.read_csv(dir_path + f'cruise_time_imputed_{delta_t}m.csv')
-        self.data_mc2d = np.loadtxt(dir_path + f"mc_mtx_{delta_t}.txt")
+        self.data_mc2d = scipy.sparse.load_npz(dir_path + f'mc_mtx_{delta_t}.npz')
         self.data_index = pd.read_csv(dir_path + 'interval_index_table_0.csv')
         self.data_index['interval'] = pd.to_datetime(
             self.data_index['interval']).dt.time
