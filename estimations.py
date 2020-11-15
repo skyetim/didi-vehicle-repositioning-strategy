@@ -7,9 +7,9 @@ class Estimator:
 
     def __init__(self, delta_t, dir_path=''):
         self.delta_t = delta_t
-        self.data_fare = pd.read_csv(dir_path + 'fare_amount_src_dst_t.csv')
+        self.data_fare = pd.read_csv(dir_path + 'fare_amount_src_dst_t_{}.csv'.format(int(delta_t)))
         self.data_distance = pd.read_csv(dir_path + 'trip_distance_src_dst.csv')
-        self.data_time = pd.read_csv(dir_path + 'trip_time_src_dst_t.csv')
+        self.data_time = pd.read_csv(dir_path + 'trip_time_src_dst_t_{}.csv'.format(int(delta_t)))
         self.data_cruise = pd.read_csv(dir_path + 'cruise_time_{}m.csv'.format(int(delta_t)))
         self.data_mc2d = np.loadtxt(dir_path + "mc_mtx.txt")
         self.data_index = pd.read_csv(dir_path + 'interval_index_table_0.csv')
@@ -43,20 +43,26 @@ class Estimator:
             dst = [dst]
             t = [t]
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                          (match['dropoff_taxizone_id'].isin(dst))]
-            m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
+                          (match['dropoff_taxizone_id'].isin(dst))&
+                          (match['pickup_datetime_index'].isin(t)), 'mean']
+            #m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
             if m.shape[0] == 0:
                 result = -1
             else:
                 result = m.values[0]
         else:
+            mm = []
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                          (match['dropoff_taxizone_id'].isin(dst))]
-            m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
-            if m.shape[0] == 0:
+                          (match['dropoff_taxizone_id'].isin(dst))&
+                          (match['pickup_datetime_index'].isin(t))]
+            for i in range(len(src)):
+                mm.append(m.loc[(match['pickup_taxizone_id']==src[i]) &
+                          (match['dropoff_taxizone_id']==dst[i])&
+                          (match['pickup_datetime_index']==t[i]),'mean'].values[0])
+            if len(mm) == 0:
                 result = -1
             else:
-                result = m.values
+                result = mm
         return result
 
     # TODO: ty & xx
@@ -88,14 +94,18 @@ class Estimator:
             else:
                 result = m.values[0]
         else:
-            m = match.loc[(match['pickup_taxizone_id'].isin(src)) & (
-                match['dropoff_taxizone_id'].isin(dst)), 'mean']
-            if m.shape[0] == 0:
+            mm = []
+            m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
+                          (match['dropoff_taxizone_id'].isin(dst))]
+            for i in range(len(src)):
+                mm.append(m.loc[(match['pickup_taxizone_id']==src[i]) &
+                          (match['dropoff_taxizone_id']==dst[i]),'mean'].values[0])
+            if len(mm) == 0:
                 result = -1
             else:
-                result = m.values
+                result = mm
         return result
-
+    
     # TODO: ty & xx
 
     def trip_time(self, src, dst, t):
@@ -127,15 +137,20 @@ class Estimator:
             if m.shape[0] == 0:
                 result = -1
             else:
-                result = int(round(1.0*m.values[0]/15))
+                result = int(round(1.0*m.values[0]/int(self.delta_t)))
         else:
+            mm = []
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                          (match['dropoff_taxizone_id'].isin(dst))]
-            m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
-            if m.shape[0] == 0:
+                          (match['dropoff_taxizone_id'].isin(dst))&
+                          (match['pickup_datetime_index'].isin(t))]
+            for i in range(len(src)):
+                mm.append(m.loc[(match['pickup_taxizone_id']==src[i]) &
+                          (match['dropoff_taxizone_id']==dst[i])&
+                          (match['pickup_datetime_index']==t[i]),'mean'].values[0])
+            if len(mm) == 0:
                 result = -1
             else:
-                result = [int(round(1.0*z/15)) for z in m.values]
+                result = [int(round(1.0*z/int(self.delta_t))) for z in mm]
         return result
 
     # TODO: yy & bo
