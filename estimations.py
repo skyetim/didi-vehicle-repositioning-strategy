@@ -7,10 +7,10 @@ class Estimator:
 
     def __init__(self, delta_t=10, dir_path='data/'):
         self.delta_t = delta_t
-        self.data_fare = pd.read_csv(dir_path + 'fare_amount_src_dst_t_{}.csv'.format(int(delta_t)))
+        self.data_fare = pd.read_csv(dir_path + f'fare_amount_src_dst_t_{delta_t}.csv')
         self.data_distance = pd.read_csv(dir_path + 'trip_distance_src_dst.csv')
-        self.data_time = pd.read_csv(dir_path + 'trip_time_src_dst_t_{}.csv'.format(int(delta_t)))
-        self.data_cruise = pd.read_csv(dir_path + 'cruise_time_{}m.csv'.format(int(delta_t)))
+        self.data_time = pd.read_csv(dir_path + f'trip_time_src_dst_t_{delta_t}.csv')
+        self.data_cruise = pd.read_csv(dir_path + f'cruise_time_imputed_{delta_t}m.csv')
         self.data_mc2d = np.loadtxt(dir_path + "mc_mtx.txt")
         self.data_index = pd.read_csv(dir_path + 'interval_index_table_0.csv')
         self.data_index['interval'] = pd.to_datetime(
@@ -226,7 +226,9 @@ class Estimator:
 
         population = np.arange(1, zone_num + 1)
         # index starts from 0, zone starts from 1
-        weights = mc_mtx[t, zone - 1, :]
+        assert int(t) == t, f"Non integer time: {t}"
+        assert int(zone) == zone, f"Non integer time: {zone}"
+        weights = mc_mtx[int(t), int(zone) - 1, :]
 
         if (weights == np.zeros((1, zone_num))).all():
             uniform = np.full((zone_num, 1), 1 / zone_num)

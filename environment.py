@@ -5,13 +5,14 @@ from estimations import Estimator
 
 
 class NYCEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, delta_t=10):
         super(NYCEnv, self).__init__()
         self.NUM_TAXI_ZONES = 263
         self.SHIFT_START_TIME = 32
         self.SHIFT_DURATION = 64
         self.FUEL_UNIT_PRICE = .125
         self.TERMINATE_PENALTY = -10000
+        self.delta_t = delta_t
         self.action_space = spaces.Discrete(self.NUM_TAXI_ZONES + 1)
         self.observation_space = spaces.Box(
             low=np.array([1, self.SHIFT_START_TIME]),
@@ -19,7 +20,7 @@ class NYCEnv(gym.Env):
                 [self.NUM_TAXI_ZONES, self.SHIFT_START_TIME + self.SHIFT_DURATION]),
             dtype=np.int32,
         )
-        self.estimator = Estimator('data/')
+        self.estimator = Estimator(delta_t=delta_t)
 
     def step(self, action):
         if action == 0:
