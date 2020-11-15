@@ -16,7 +16,6 @@ class Estimator:
         self.data_index['interval'] = pd.to_datetime(
             self.data_index['interval']).dt.time
         self.data_adjacent = pd.read_csv(dir_path + 'adjacent_zone.csv')
-        
 
     def trip_fare(self, src, dst, t):
         """compute trip fare between two taxi zones at time t.
@@ -43,7 +42,7 @@ class Estimator:
             dst = [dst]
             t = [t]
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                          (match['dropoff_taxizone_id'].isin(dst))&
+                          (match['dropoff_taxizone_id'].isin(dst)) &
                           (match['pickup_datetime_index'].isin(t)), 'mean']
             #m = m.loc[(m['pickup_datetime_index'].isin(t)), 'mean']
             if m.shape[0] == 0:
@@ -53,12 +52,12 @@ class Estimator:
         else:
             mm = []
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                          (match['dropoff_taxizone_id'].isin(dst))&
+                          (match['dropoff_taxizone_id'].isin(dst)) &
                           (match['pickup_datetime_index'].isin(t))]
             for i in range(len(src)):
-                mm.append(m.loc[(match['pickup_taxizone_id']==src[i]) &
-                          (match['dropoff_taxizone_id']==dst[i])&
-                          (match['pickup_datetime_index']==t[i]),'mean'].values[0])
+                mm.append(m.loc[(match['pickup_taxizone_id'] == src[i]) &
+                                (match['dropoff_taxizone_id'] == dst[i]) &
+                                (match['pickup_datetime_index'] == t[i]), 'mean'].values[0])
             if len(mm) == 0:
                 result = -1
             else:
@@ -98,14 +97,14 @@ class Estimator:
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
                           (match['dropoff_taxizone_id'].isin(dst))]
             for i in range(len(src)):
-                mm.append(m.loc[(match['pickup_taxizone_id']==src[i]) &
-                          (match['dropoff_taxizone_id']==dst[i]),'mean'].values[0])
+                mm.append(m.loc[(match['pickup_taxizone_id'] == src[i]) &
+                                (match['dropoff_taxizone_id'] == dst[i]), 'mean'].values[0])
             if len(mm) == 0:
                 result = -1
             else:
                 result = mm
         return result
-    
+
     # TODO: ty & xx
 
     def trip_time(self, src, dst, t):
@@ -141,12 +140,12 @@ class Estimator:
         else:
             mm = []
             m = match.loc[(match['pickup_taxizone_id'].isin(src)) &
-                          (match['dropoff_taxizone_id'].isin(dst))&
+                          (match['dropoff_taxizone_id'].isin(dst)) &
                           (match['pickup_datetime_index'].isin(t))]
             for i in range(len(src)):
-                mm.append(m.loc[(match['pickup_taxizone_id']==src[i]) &
-                          (match['dropoff_taxizone_id']==dst[i])&
-                          (match['pickup_datetime_index']==t[i]),'mean'].values[0])
+                mm.append(m.loc[(match['pickup_taxizone_id'] == src[i]) &
+                                (match['dropoff_taxizone_id'] == dst[i]) &
+                                (match['pickup_datetime_index'] == t[i]), 'mean'].values[0])
             if len(mm) == 0:
                 result = -1
             else:
@@ -269,13 +268,14 @@ class Estimator:
         time_index_col = 'time_index_{}m'.format(int(self.delta_t))
         round_time = '{}min'.format(int(self.delta_t))
         rounded_q_time = ts.dt.round(round_time).dt.time.values
-        env_time = np.array([index_conversion_table.loc[index_conversion_table['interval'] == q][time_index_col].values[0] for q in rounded_q_time])
-
+        env_time = np.array(
+            [index_conversion_table.loc[index_conversion_table['interval'] == q][time_index_col].values[0]
+             for q in rounded_q_time])
 
         # Handle when the time does not start at 12:00am
         if t0 != 0:
             env_time = np.array([i+24 if i < 0 else i for i in (env_time - t0)])
-        
+
         env_time_int = env_time.astype(int)
         if len(env_time_int) == 1:
             return env_time_int[0]
