@@ -221,6 +221,8 @@ class Estimator:
         """
         zone_num = 263
         mc_mtx_2d = self.data_mc2d
+        mc_mtx_2d = mc_mtx_2d.todense()
+        mc_mtx_2d = np.array(mc_mtx_2d)
         # convert back to 3d array
         mc_mtx = mc_mtx_2d.reshape(
             mc_mtx_2d.shape[0], mc_mtx_2d.shape[1] // zone_num, zone_num)
