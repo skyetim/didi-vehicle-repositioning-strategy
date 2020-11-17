@@ -8,8 +8,8 @@ class NYCEnv(gym.Env):
     def __init__(self, delta_t=10):
         super(NYCEnv, self).__init__()
         self.NUM_TAXI_ZONES = 263
-        self.SHIFT_START_TIME = 32
-        self.SHIFT_DURATION = 64
+        self.SHIFT_START_TIME = 60 // delta_t * 8
+        self.SHIFT_DURATION = 60 // delta_t * 8
         self.FUEL_UNIT_PRICE = .125
         self.TERMINATE_PENALTY = -10000
         self.delta_t = delta_t
