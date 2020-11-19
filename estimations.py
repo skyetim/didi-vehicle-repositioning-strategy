@@ -13,6 +13,7 @@ class Estimator:
         self.data_time = pd.read_csv(dir_path + f'trip_time_src_dst_t_{delta_t}.csv')
         self.data_cruise = pd.read_csv(dir_path + f'cruise_time_imputed_{delta_t}m.csv')
         self.data_mc2d = scipy.sparse.load_npz(dir_path + f'mc_mtx_{delta_t}.npz')
+        self.data_matching_prob = pd.read_csv(dir_path + f'matching_prob_{delta_t}.csv')
         self.data_index = pd.read_csv(dir_path + 'interval_index_table_0.csv')
         self.data_index['interval'] = pd.to_datetime(
             self.data_index['interval']).dt.time
@@ -309,3 +310,23 @@ class Estimator:
             r = ad.loc[(ad.zone1 == src) & (ad.zone2 == dst)]
 
         return (len(r) > 0)
+    
+    # TODO: ty & xx
+    def matching_prob(self, t, zone):
+        """
+        given time t and zone, return the matching probability # pickups / # dropoffs
+        
+        parameters
+        ------
+        t: int
+        zone: int
+        
+        return
+        ------
+        prob: float
+        
+        """
+        df = self.data_matching_prob  
+        arr = np.asarray(df)
+        prob = arr[t-1, zone-1]
+        return prob
