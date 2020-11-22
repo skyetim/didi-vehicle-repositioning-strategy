@@ -2,8 +2,10 @@
 from collections import defaultdict
 import itertools
 import numpy as np
+import pandas as pd
 import plotting
 import sys
+from tqdm.auto import trange
 
 
 def make_epsilon_greedy_policy(Q, epsilon, nA):
@@ -100,3 +102,44 @@ def sarsa(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
             state = next_state
 
     return Q, stats
+
+
+def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1., alpha=0.5, batch_size=32):
+    """
+    SARSA algorithm: On-policy TD control. Finds the optimal epsilon-greedy policy.
+
+    Args:
+        env: OpenAI environment.
+        num_episodes: Number of episodes to run for.
+        discount_factor: Gamma discount factor.
+        alpha: TD learning rate.
+        epsilon: Chance the sample a random action. Float betwen 0 and 1.
+
+    Returns:
+        A tuple (Q, stats).
+        Q is the optimal action-value function, a dictionary mapping state -> action values.
+        stats is an EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
+    """
+
+    # The final action-value function.
+    # A nested dictionary that maps state -> (action -> action-value).
+    Q = defaultdict(lambda: np.zeros(num_actions))
+    history = []
+
+    total_samples = samples.shape[0]
+    num_episodes = num_episodes or (total_samples // batch_size)
+
+    for cur_episode in trange(num_episodes, desc='Episode'):
+        for cur_sample in np.random.choice(total_samples, batch_size):
+            _, state, action, reward, next_state, next_action = samples.iloc[cur_sample]
+
+            # TD Update
+            EQ = Q[next_state][next_action] if not pd.isnull(next_action) else 0
+            td_target = reward + discount_factor * EQ
+            td_delta = td_target - Q[state][action]
+            Q[state][action] += alpha * td_delta
+
+        if cur_episode % 100 == 0:
+            history.append(np.mean([i.max() for i in Q.values()]))
+
+    return Q, history
