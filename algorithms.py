@@ -124,22 +124,29 @@ def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1.,
     # The final action-value function.
     # A nested dictionary that maps state -> (action -> action-value).
     Q = defaultdict(lambda: np.zeros(num_actions))
-    history = []
+    history = defaultdict(list)
 
     total_samples = samples.shape[0]
     num_episodes = num_episodes or (total_samples // batch_size)
 
     for cur_episode in trange(num_episodes, desc='Episode'):
+        batch_td_error = 0
         for cur_sample in np.random.choice(total_samples, batch_size):
             _, state, action, reward, next_state, next_action = samples.iloc[cur_sample]
+
+            assert (action == int(action)) and (pd.isnull(next_action) or (next_action == int(next_action))), 'Action is a float'
+            action = int(action)
+            next_action = int(next_action) if not pd.isnull(next_action) else next_action
 
             # TD Update
             EQ = Q[next_state][next_action] if not pd.isnull(next_action) else 0
             td_target = reward + discount_factor * EQ
             td_delta = td_target - Q[state][action]
+            batch_td_error += td_delta
             Q[state][action] += alpha * td_delta
 
         if cur_episode % 100 == 0:
-            history.append(np.mean([i.max() for i in Q.values()]))
+            history['mean_max_q'].append(np.mean([i.max() for i in Q.values()]))
+        history['mean_td_delta'].append(batch_td_error/batch_size)
 
     return Q, history
