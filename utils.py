@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 import numpy as np
 import fiona
 import shapely
@@ -54,7 +55,7 @@ def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32):
     p = nx.get_node_attributes(G,'pos')
     fig = plt.figure(3,figsize=(30,30)) 
     nx.draw_networkx_nodes(G, pos=p, node_color='white', node_size=500, edgecolors = color, linewidths=width)
-    nx.draw_networkx_labels(G, pos=p, label=G.nodes, font_size=10)
+    nx.draw_networkx_labels(G, pos=p, font_size=10)
     nx.draw_networkx_edges(G, pos = p, width=3, edge_color='red')
     ax = plt.gca() # get the current axis
     ax.collections[0].set_edgecolor(color) 
@@ -85,3 +86,27 @@ def plot_v_s(v):
     #plt.savefig('../v_s.png', bbox_inches = 'tight')
     plt.show() 
     return 
+
+
+def plot_td_error(mean_td_delta, save_path, n=5000):
+    '''
+    Plot the td error
+    Args:
+    @mean_td_delta: mean td error. Comes from training history['mean_td_delta']
+    @n: window size of moving average
+    @save_path: plot saving path
+    '''
+    mean_td_delta = pd.DataFrame(mean_td_delta)
+    n = 5000
+    mean_td_delta['MA'] = mean_td_delta.rolling(window=n).mean()
+    mean_td_delta.MA.plot(figsize=(15,5),legend=None);
+
+    plt.rcParams.update({'font.size': 20})
+    plt.xlabel('iterations');
+    plt.ylabel('Mean TD Error');
+    # plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x/1000) + 'K'))
+    plt.gca().xaxis.set_major_formatter(ticker.EngFormatter())
+    plt.title('Average TD Error (moving average = {})'.format(n));
+    plt.savefig(save_path, bbox_inches = 'tight')
+    print('saved at ',save_path)
+    plt.show()
