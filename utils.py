@@ -88,7 +88,7 @@ def plot_v_s(v):
     return 
 
 
-def plot_td_error(mean_td_delta, n=5000, save_path='../fig/'):
+def plot_td_error(mean_td_delta, save_path, n=5000):
     '''
     Plot the td error
     Args:
@@ -103,10 +103,10 @@ def plot_td_error(mean_td_delta, n=5000, save_path='../fig/'):
 
     plt.rcParams.update({'font.size': 20})
     plt.xlabel('iterations');
-    plt.ylabel('mean_td_delta');
+    plt.ylabel('Mean TD Error');
     # plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x/1000) + 'K'))
     plt.gca().xaxis.set_major_formatter(ticker.EngFormatter())
-    plt.title('mean_td_delta(moving average = {})'.format(n));
-    plt.savefig(save_path+'mean_td_delta.png', bbox_inches = 'tight')
-    print('saved at ',save_path+'mean_td_delta.png')
+    plt.title('Average TD Error (moving average = {})'.format(n));
+    plt.savefig(save_path, bbox_inches = 'tight')
+    print('saved at ',save_path)
     plt.show()
