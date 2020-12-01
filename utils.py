@@ -107,5 +107,6 @@ def plot_td_error(mean_td_delta, n=5000, save_path='../fig/'):
     # plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x/1000) + 'K'))
     plt.gca().xaxis.set_major_formatter(ticker.EngFormatter())
     plt.title('mean_td_delta(moving average = {})'.format(n));
-#     plt.savefig(save_path+'mean_td_delta.png', bbox_inches = 'tight')
+    plt.savefig(save_path+'mean_td_delta.png', bbox_inches = 'tight')
+    print('saved at ',save_path+'mean_td_delta.png')
     plt.show()
