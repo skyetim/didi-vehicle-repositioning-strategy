@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 import numpy as np
 import fiona
 import shapely
@@ -85,3 +86,26 @@ def plot_v_s(v):
     #plt.savefig('../v_s.png', bbox_inches = 'tight')
     plt.show() 
     return 
+
+
+def plot_td_error(mean_td_delta, n=5000, save_path='../fig/'):
+    '''
+    Plot the td error
+    Args:
+    @mean_td_delta: mean td error. Comes from training history['mean_td_delta']
+    @n: window size of moving average
+    @save_path: plot saving path
+    '''
+    mean_td_delta = pd.DataFrame(mean_td_delta)
+    n = 5000
+    mean_td_delta['MA'] = mean_td_delta.rolling(window=n).mean()
+    mean_td_delta.MA.plot(figsize=(15,5),legend=None);
+
+    plt.rcParams.update({'font.size': 20})
+    plt.xlabel('iterations');
+    plt.ylabel('mean_td_delta');
+    # plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x/1000) + 'K'))
+    plt.gca().xaxis.set_major_formatter(ticker.EngFormatter())
+    plt.title('mean_td_delta(moving average = {})'.format(n));
+#     plt.savefig(save_path+'mean_td_delta.png', bbox_inches = 'tight')
+    plt.show()
