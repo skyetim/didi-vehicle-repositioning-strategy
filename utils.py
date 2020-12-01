@@ -54,7 +54,7 @@ def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32):
     p = nx.get_node_attributes(G,'pos')
     fig = plt.figure(3,figsize=(30,30)) 
     nx.draw_networkx_nodes(G, pos=p, node_color='white', node_size=500, edgecolors = color, linewidths=width)
-    nx.draw_networkx_labels(G, pos=p, label=G.nodes, font_size=10)
+    nx.draw_networkx_labels(G, pos=p, font_size=10)
     nx.draw_networkx_edges(G, pos = p, width=3, edge_color='red')
     ax = plt.gca() # get the current axis
     ax.collections[0].set_edgecolor(color) 
