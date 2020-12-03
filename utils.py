@@ -9,7 +9,7 @@ import networkx as nx
 import pickle
 
 
-def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32):
+def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32, all_nodes=False):
     q = open(q_path, 'rb')
     data = pickle.load(q)
     edge = [] # action to another zone
@@ -17,6 +17,8 @@ def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32):
     self = [] # action within the same zone
     a = np.zeros((264,))
     v = []
+    nodes = []
+    
     for i in data:
         if i[1]==t:
             now = data[i]
@@ -25,44 +27,61 @@ def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32):
                 start = int(i[0])
                 end = int(np.argmax(now))
                 v.append([start, np.amax(now)])
+                nodes.append(start)
+                nodes.append(end)
+                    
                 if (end == 0):
                     wait.append(start)
                 elif (start == end):
                     self.append(end)
                 else:
                     edge.append((start, end))
+                    
+    nodes = list(set(nodes))
+    
     G = nx.DiGraph()
     taxi_zones = fiona.open(shp_file)
-    color=[] # red for action, blue for weight
-    width = [] # bolder if there is optimal action
-    for i in range(len(taxi_zones)):
-        zone = taxi_zones[i]
+    for j in range(len(taxi_zones)):
+        zone = taxi_zones[j]
         i = int(zone['id']) + 1
         shape = shapely.geometry.asShape(zone['geometry'])
         center = shape.centroid.coords[0]
-        G.add_node(i,pos=center) # add node with position
-        if (i in wait):
-            color.append('blue')
-            width.append(3)
-        elif (i in self):
-            color.append('red')
-            width.append(3)
+        
+        #add node
+        if(all_nodes==True):
+            G.add_node(i, pos=center) # add node with position
         else:
-            color.append('black')
-            width.append(1)
+            if(i in nodes):
+                G.add_node(i, pos=center)
+    
+    color = ['' for k in range(len(list(G.nodes)))] # red for action, blue for wait
+    width = np.zeros(len(list(G.nodes)))  # bolder if there is optimal action
+    
+    for i in range(len(list(G.nodes))):
+        n = list(G.nodes)[i]
+        if (n in wait):
+            color[i] = 'blue'
+            width[i] = 3
+        elif (n in self):
+            color[i] ='red'
+            width[i] = 3
+        else:
+            color[i] ='black'
+            width[i] = 1
+    
     # add edge
     G.add_edges_from(edge)
     p = nx.get_node_attributes(G,'pos')
     fig = plt.figure(3,figsize=(30,30)) 
     nx.draw_networkx_nodes(G, pos=p, node_color='white', node_size=500, edgecolors = color, linewidths=width)
-    nx.draw_networkx_labels(G, pos=p, font_size=10)
+    nx.draw_networkx_labels(G, pos=p, label=G.nodes, font_size=10)
     nx.draw_networkx_edges(G, pos = p, width=3, edge_color='red')
     ax = plt.gca() # get the current axis
     ax.collections[0].set_edgecolor(color) 
-    fig.suptitle('Optimal Action for Taxi Zone', fontsize=30, y=0.9)
+    fig.suptitle('Optimal Action for Taxi Zones', fontsize=30, y=0.9)
     #plt.savefig('../optimal_q.png', bbox_inches = 'tight')
     plt.show()
-    
+
     return v
 
 
@@ -110,3 +129,5 @@ def plot_td_error(mean_td_delta, save_path, n=5000):
     plt.savefig(save_path, bbox_inches = 'tight')
     print('saved at ',save_path)
     plt.show()
+    
+

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from random import choices
 import scipy.sparse
-
+import networkx as nx
 
 class Estimator:
 
@@ -18,6 +18,7 @@ class Estimator:
         self.data_index['interval'] = pd.to_datetime(
             self.data_index['interval']).dt.time
         self.data_adjacent = pd.read_csv(dir_path + 'adjacent_zone.csv')
+        self.G = self.create_graph()
 
     def trip_fare(self, src, dst, t):
         """compute trip fare between two taxi zones at time t.
@@ -329,3 +330,25 @@ class Estimator:
         arr = np.asarray(df)
         prob = arr[t-1, zone-1]
         return prob
+    
+    
+    
+    def create_graph(self):
+        # create networkx graph
+        G=nx.Graph()
+        G.add_nodes_from(list(range(1, 264)))
+        # add edge with weight
+        
+        ad = self.data_adjacent
+        for i in range(ad.shape[0]):
+            s = int(ad.iloc[i,0])
+            e = int(ad.iloc[i,1])
+            w = self.trip_distance(s, e)
+            if (w != -1):
+                G.add_edge(s, e, weight=w)
+        return G
+    
+    
+    def shortest_path(self, start, end):
+        path = nx.dijkstra_path(self.G, start, end)
+        return path
