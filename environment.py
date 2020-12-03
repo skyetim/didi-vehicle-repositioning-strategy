@@ -57,11 +57,18 @@ class NYCEnv(gym.Env):
         info = {}
         if self._check_done():
             return np.array([self.current_taxi_zone, self.current_time]), 0, True, info
-        dst = self.estimator.generate_request(self.current_taxi_zone, self.current_time)
-        self.current_time += self.estimator.trip_time(self.current_taxi_zone, dst, self.current_time)
-        reward = self.estimator.trip_fare(self.current_taxi_zone, dst, self.current_time)
-        reward -= self.FUEL_UNIT_PRICE * self.estimator.trip_distance(self.current_taxi_zone, dst)
-        self.current_taxi_zone = dst
+        # generate next request with probability
+        prob = np.random.rand()
+        prob_threshold = self.estimator.matching_prob(self.current_time, self.current_taxi_zone)
+        if prob < prob_threshold:
+            dst = self.estimator.generate_request(self.current_taxi_zone, self.current_time)
+            self.current_time += self.estimator.trip_time(self.current_taxi_zone, dst, self.current_time)
+            reward = self.estimator.trip_fare(self.current_taxi_zone, dst, self.current_time)
+            reward -= self.FUEL_UNIT_PRICE * self.estimator.trip_distance(self.current_taxi_zone, dst)
+            self.current_taxi_zone = dst
+        else:
+            self.current_time += 1
+            reward = 0
         self.total_rewards += reward
         return np.array([self.current_taxi_zone, self.current_time]), reward, self._check_done(), info
 
