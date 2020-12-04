@@ -332,7 +332,6 @@ class Estimator:
         return prob
     
     
-    
     def create_graph(self):
         # create networkx graph
         G=nx.Graph()
@@ -344,8 +343,9 @@ class Estimator:
             s = int(ad.iloc[i,0])
             e = int(ad.iloc[i,1])
             w = self.trip_distance(s, e)
-            if (w != -1):
-                G.add_edge(s, e, weight=w)
+            if (w == -1):              
+                w = ad.loc[(ad.zone1==s) & (ad.zone2==e), 'distance'].values[0]
+            G.add_edge(s, e, weight=w)
         return G
     
     
