@@ -1,11 +1,10 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 import pickle
-from functools import reduce
 from tqdm import tqdm
-
+from estimations import Estimator
+import os
 
 """
 - Sort df by 'hack_license', 'pickup_datetime'
@@ -109,9 +108,43 @@ def convert_to_time_index(episode_data, interval_index_table, delta_t):
     episode_data['dropoff_datetime_index'] = [current_conversion[t] for t in episode_data['dropoff_datetime_interval']]
     return episode_data
 
+def _merge_immediate_trips(trip_df):
+
+    trip_df.sort_values(['episode', 'sub_index'], inplace=True)
+    
+    trip_df['pickup_datetime_index_next'] = trip_df.groupby('episode')['pickup_datetime_index'].shift(-1)
+    trip_df['pickup_taxizone_id_next'] = trip_df.groupby('episode')['pickup_taxizone_id'].shift(-1)
+
+    trip_df['dropoff_datetime_index_prev'] = trip_df.groupby('episode')['dropoff_datetime_index'].shift(1)
+    trip_df['dropoff_taxizone_id_prev'] = trip_df.groupby('episode')['dropoff_taxizone_id'].shift(1)
+
+    
+    trip_df['mask_bfill'] = np.where((trip_df['dropoff_taxizone_id']==trip_df['pickup_taxizone_id_next']) &
+                                     (trip_df['dropoff_datetime_index']==trip_df['pickup_datetime_index_next']), 1, np.nan)
+    trip_df['mask_ffill'] = np.where((trip_df['pickup_taxizone_id']==trip_df['dropoff_taxizone_id_prev']) &
+                                     (trip_df['pickup_datetime_index']==trip_df['dropoff_datetime_index_prev']), 1, np.nan)
+
+    ffill_cols = ['sub_index', 'pickup_taxizone_id', 'pickup_datetime_index']
+    for col_names in ffill_cols:
+        trip_df[col_names] = np.where(trip_df['mask_ffill'] == 1, np.nan, trip_df[col_names])
+        trip_df[col_names] = trip_df.groupby('episode')[col_names].ffill()
+    bfill_cols = ['dropoff_taxizone_id', 'dropoff_datetime_index']
+    for col_names in bfill_cols:
+        trip_df[col_names] = np.where(trip_df['mask_bfill'] == 1, np.nan, trip_df[col_names])
+        trip_df[col_names] = trip_df.groupby('episode')[col_names].bfill()
+        
+    trip_df = trip_df[['episode', 'sub_index', 'pickup_taxizone_id', 'dropoff_taxizone_id', 'pickup_datetime_index', 
+                   'dropoff_datetime_index', 'total_amount']]
+    trip_df = trip_df.groupby(['episode', 'sub_index', 'pickup_taxizone_id', 'dropoff_taxizone_id', 
+                               'pickup_datetime_index', 'dropoff_datetime_index'], as_index=False).agg('sum')
+    return trip_df
+    
+    
 def get_trip_df(episode_data):
     trip_df = episode_data[[ 'episode', 'sub_index', 'pickup_taxizone_id', 'dropoff_taxizone_id', 'pickup_datetime_index',
                         'dropoff_datetime_index', 'total_amount']].copy()
+    
+    trip_df = _merge_immediate_trips(trip_df)
 
     trip_df.sort_values(['episode', 'sub_index'], inplace=True)
     trip_df.rename(columns={'pickup_taxizone_id': 'loc',
@@ -139,8 +172,9 @@ def get_repo_df(trip_df):
 ## insert rows to dataframe if cruising takes more than 1 interval
 def _expand_by_time_step_helper(selected_df):
     df = selected_df.copy()
-    lower_time = min(df['time'])
-    upper_time = max(df['time_next'])
+    lower_time = int(min(df['time']))
+    upper_time = int(max(df['time_next']))
+    
     df['time'] = range(lower_time, upper_time)
     df['time_next'] = range(lower_time+1, upper_time+1)
     df['expanded_index'] = range(upper_time-lower_time) ##for sorting within expanded rows
@@ -148,83 +182,137 @@ def _expand_by_time_step_helper(selected_df):
 
 ## extract rows that will be expanded from the rest. Return the expanded part and a list of which rows in repo_df to be kept. 
 def expand_by_time_step(reposition_df):
-    cruise_list = []
+    expand_list = []
     repeat_size = []
     kept_list = []
-    repo_df = reposition_df.copy()
 
     # for cruise rows that are longer than 1 time interval
-    for row in repo_df.itertuples(index=False):
+    for row in reposition_df.itertuples(index=False):
         if (getattr(row, 'type') == 1) & (getattr(row, 'time_next') - getattr(row, 'time') > 1):
-            cruise_list.append(tuple(row))
-            repeat_size.append(getattr(row, 'time_next') - getattr(row, 'time'))
+            expand_list.append(tuple(row))
+            repeat_size.append(int(getattr(row, 'time_next') - getattr(row, 'time')))
             kept_list.append(np.nan)
         else:
             kept_list.append(1)
-#     repo_df['kept'] = kept_list
-#     repo_df.dropna(subset=['kept'], inplace=True)
-#     repo_df.drop(columns=['kept'], inplace=True)
 
-    if cruise_list == []:  ## i.e. no cruise needs expanding 
-        return None
+    # if no rows to be expand, return None
+    if expand_list == []:
+        return None, None, None
     
-    cruise_df = pd.DataFrame(np.repeat(np.array(cruise_list), repeat_size, axis=0))
-    cruise_df.columns = repo_df.columns
-
-    ## Cast type back to int
-    cruise_df = cruise_df.astype({'episode': 'float',
+    expand_df_list = [pd.DataFrame(np.repeat(np.array([np.array(current_df)]), 
+                                             np.array(current_repeatsize), axis=0),
+                                   columns=reposition_df.columns) \
+                      for current_df, current_repeatsize in zip(expand_list, repeat_size)]
+    expand_df_list_1 = [_expand_by_time_step_helper(df) for df in expand_df_list]
+    expand_df = pd.concat(expand_df_list_1, axis=0)  
+    expand_df = expand_df.astype({'episode': 'float',
                                   'sub_index': 'float',
                                   'loc': 'float',
                                   'time': 'float',
                                   'loc_next': 'float',
                                   'time_next': 'float',
                                   'type': 'float'})
-    cruise_df = cruise_df.astype({'episode': 'Int64',
+    expand_df = expand_df.astype({'episode': 'Int64',
+                                  'sub_index': 'Int64',
+                                  'loc': 'Int64',
+                                  'time': 'Int64',
+                                  'loc_next': 'Int64',
+                                  'time_next': 'Int64',
+                                  'type': 'Int64'})        
+    return expand_df, kept_list
+
+def _expand_by_zones_helper(df, path):
+    # location
+    t = len(path)-1
+    df['loc'] = path[:t]
+    df['loc_next'] = path[-t:]
+    
+    # time
+    lower_time = min(df['time'])
+    upper_time = max(df['time_next'])
+    time_list = np.linspace(lower_time, upper_time, t+1, endpoint=True).astype(int)
+    df['time'] = time_list[:t]
+    df['time_next'] = time_list[-t:]
+    df['expanded_index'] = np.linspace(lower_time, upper_time, t, endpoint=True) ##for sorting within expanded rows
+    return df
+
+def expand_by_zones(repo_df):
+    
+    expand_list = []
+    repeat_size = []
+    kept_list = []
+    path_list = []
+    remove_log = [] ## keep track of episode to be removed
+    # for cruise rows that are longer than 1 time interval
+    for row in repo_df.itertuples(index=False):
+        origin = getattr(row, 'loc')
+        destination = getattr(row, 'loc_next')
+        if np.isnan(destination):
+            kept_list.append(1)
+            continue
+
+        try:
+            shortest_path = est.shortest_path(origin,destination)
+        except:
+            ## zone 1 is out of reach. An episode with zone 1 will be removed.
+            remove_log.append(getattr(row, 'episode'))
+            kept_list.append(1)
+            continue
+
+        if len(shortest_path) > 2:
+            expand_list.append(tuple(row))
+            repeat_size.append(int(len(shortest_path)-1))
+            kept_list.append(np.nan) ## to be removed from repo_df
+            path_list.append(shortest_path)
+        else:
+            kept_list.append(1)
+            
+    ## if no row need expanding, return None and keep al rows of repo_df
+    if expand_list == []:
+        return None, None, None
+    
+    expand_df_list = [pd.DataFrame(np.repeat(np.array([np.array(current_df)]), 
+                                             np.array(current_repeatsize), axis=0),
+                                   columns=repo_df.columns) \
+                      for current_df, current_repeatsize in zip(expand_list, repeat_size)]
+    expand_df_list_1 = [_expand_by_zones_helper(df, path) for df, path in zip(expand_df_list, path_list)]
+    expand_df = pd.concat(expand_df_list_1, axis=0)  
+    expand_df = expand_df.astype({'episode': 'float',
+                                  'sub_index': 'float',
+                                  'loc': 'float',
+                                  'time': 'float',
+                                  'loc_next': 'float',
+                                  'time_next': 'float',
+                                  'type': 'float'})
+    expand_df = expand_df.astype({'episode': 'Int64',
                                   'sub_index': 'Int64',
                                   'loc': 'Int64',
                                   'time': 'Int64',
                                   'loc_next': 'Int64',
                                   'time_next': 'Int64',
                                   'type': 'Int64'})
-    
-    # Expand cruise_df at every time step
-    if cruise_df is not None:
-        cruise_df = cruise_df.groupby(['episode', 'sub_index', 'loc', 'reward', 'type', 'loc_next']).apply(_expand_by_time_step_helper)
-        
-    return cruise_df, kept_list
+    return expand_df, kept_list, remove_log
 
 # expand same zone cruising at every time step 
-def process_repo_df(reposition_df):
-    # Separate into 1. transitions of cruise within the zone (cruise_df) 
-    # and 2. transitions of repositioning to other zone (repo_df)
-    cruise_df, kept_list = expand_by_time_step(reposition_df)
+def combine_expand_and_repo_df(reposition_df, expand_df, kept_list):
+    
+    ## if no expand df, return original reposition_df
+    if expand_df is None:
+        reposition_df['expanded_index'] = 0
+        return reposition_df
     
     ## drop rows in repo to prevent duplicates when concat to cruise
-    repo_df = reposition_df.copy()
-    repo_df['kept'] = kept_list
-    repo_df.dropna(subset=['kept'], inplace=True)
-    repo_df.drop(columns=['kept'], inplace=True)
+    reposition_df['kept'] = kept_list
+    reposition_df.dropna(subset=['kept'], inplace=True)
+    reposition_df.drop(columns=['kept'], inplace=True)
     
-    # Concatenate back cruise_df and repo_df
-    if cruise_df is not None:
-        repo_df = pd.concat([repo_df, cruise_df], sort=True).sort_values(['episode', 'sub_index'])
-        repo_df['expanded_index'] = repo_df['expanded_index'].fillna(0)
-    else:
-        repo_df['expanded_index'] = 0
+    # Concatenate back expand_df and repo_df
+    reposition_df = pd.concat([reposition_df, expand_df], sort=True).sort_values(['episode', 'sub_index'])
+    reposition_df['expanded_index'] = reposition_df['expanded_index'].fillna(0)
         
-    return repo_df
-      
-# def _combine_repo_and_cruise_df(reposition_df, cruise_df):
-#     if cruise_df is not None:
-#         cruise_df_2 = cruise_df.groupby(['episode', 'sub_index', 'loc', 'reward', 'type', 'loc_next']).apply(_expand_cruise)
-#         reposition_df = pd.concat([reposition_df, cruise_df_2], sort=True).sort_values(['episode', 'sub_index'])
-#         reposition_df['expanded_index'] = reposition_df['expanded_index'].fillna(0)
-#     else:
-#         reposition_df['expanded_index'] = 0
+    return reposition_df
 
-#     return reposition_df
-
-def to_SARSA_format(trip_df, reposition_df):
+def to_SARSA_format(trip_df, reposition_df, remove_log=None):
     sarsa_df = pd.concat([trip_df, reposition_df], sort=True)
     sarsa_df['expanded_index'] = sarsa_df['expanded_index'].fillna(0)
     sarsa_df.sort_values(['episode', 'sub_index', 'type', 'expanded_index'], inplace=True)
@@ -248,91 +336,94 @@ def to_SARSA_format(trip_df, reposition_df):
     sarsa_df['action_next'] = sarsa_df.groupby('episode')['action'].shift(-1)
     sarsa_df['state'] = [(loc, time) for loc, time in zip(sarsa_df['loc'], sarsa_df['time'])]
     sarsa_df['state_next'] = [(loc, time) for loc, time in zip(sarsa_df['loc_next'], sarsa_df['time_next'])]
+    if (remove_log is not None) & (remove_log != []):
+        sarsa_df = sarsa_df.loc[~sarsa_df['episode'].isin(remove_log)]
+    sarsa_df.reset_index(inplace=True)
     sarsa_df = sarsa_df[['episode', 'state', 'action', 'reward', 'state_next', 'action_next']]
     return sarsa_df
 
-def save_sarsa(cleaned_trip_df, shift, interval_index_table, delta_t, save_path):
+def generate_SARSA_samples(cleaned_trip_df, shift, interval_index_table, delta_t, save_path, version):
     
-#     output = preprocess_df(cleaned_trip_df)
-#     output = assign_shift(output)
-#     output = select_shift(output, shift)
-#     output = get_complete_shifts(output)
-#     output = assign_ep_id(output)
-#     output = convert_to_time_index(output, interval_index_table, delta_t)
-#     trip_df = get_trip_df(output)
-#     repo_df = get_repo_df(trip_df)
-#     cruise_df = get_cruise_df(repo_df)
-#     repo_df = combine_repo_and_cruise_df(repo_df, cruise_df)
-#     sarsa_df = to_SARSA_format(trip_df, repo_df)
+    sample_df = preprocess_df(cleaned_trip_df)
+    sample_df = assign_shift(sample_df)
+    sample_df = select_shift(sample_df, shift)
+    sample_df = get_complete_shifts(sample_df)
+    sample_df = assign_ep_id(sample_df)
+    sample_df = convert_to_time_index(sample_df, interval_index_table, delta_t)
+    trip_df = get_trip_df(sample_df)
+    repo_df = get_repo_df(trip_df)
     
-    ## expand only bt time step
-    output = tosarsa.preprocess_df(cleaned_trip_df)
-    output = tosarsa.assign_shift(output)
-    output = tosarsa.select_shift(output, shift)
-    output = tosarsa.get_complete_shifts(output)
-    output = tosarsa.assign_ep_id(output)
-    output = tosarsa.convert_to_time_index(output, interval_index_table, delta_t)
-    trip_df = tosarsa.get_trip_df(output)
-    repo_df = tosarsa.get_repo_df(trip_df)
-    repo_df = tosarsa.process_repo_df(repo_df)
-    sarsa_df = tosarsa.to_SARSA_format(trip_df, repo_df)
-    
+    if version == 3:
+        ## expand zones
+        expand_df, kept_list, remove_log = expand_by_zones(repo_df)
+        repo_df = combine_expand_and_repo_df(repo_df, expand_df, kept_list)
+    elif version == 2:
+        remove_log = None
+    else:
+        raise ValueError('version must be 2 or 3')
+
+#     ## expand time
+    expand_df, kept_list = expand_by_time_step(repo_df)
+    repo_df_1 = combine_expand_and_repo_df(repo_df, expand_df, kept_list)
+    sarsa_df = to_SARSA_format(trip_df, repo_df_1)
+
+    test_dataset(sarsa_df)
     with open(save_path, 'wb') as handle:
         pickle.dump(sarsa_df, handle)
     print('    saved at', save_path)
-    
-# def process(cleaned_trip_df, shift, interval_index_table, delta_t):
-#     print('.')
-#     output = convert_to_datetime(cleaned_trip_df)
-#     output = assign_shift(output)
-#     output = select_shift(output, shift)
-#     output = get_full_shift_trips(output)
-#     output = assign_unique_ep_id(output)
-#     output = convert_to_time_index(output, interval_index_table, delta_t)
-#     trip_df = get_trip_df(output)
-#     repo_df = get_repo_df(trip_df)
-#     cruise_df = get_cruise_df(repo_df)
-#     repo_df = combine_repo_and_cruise_df(repo_df, cruise_df)
-#     sarsa_df = to_SARSA_format(trip_df, repo_df)
-#     return sarsa_df
 
-def concat(prev_result, current_df):
-    return pd.concat([prev_result, pd.DataFrame(current_df)], axis=0)
+def test_dataset(df):
+    
+    temp = df.copy()
+    temp['cur_zone'] = [i[0] for i in temp['state']]
+    temp['next_zone'] = [i[0] for i in temp['state_next']]
+
+    temp['cur_time'] = [i[1] for i in temp['state']]
+    temp['next_time'] = [i[1] for i in temp['state_next']]
+
+    test = temp.loc[(temp['next_time'] - temp['cur_time'] > 1) & 
+                         (temp['reward'] == 0) & 
+                         (temp['cur_zone'] == temp['next_zone'])]
+    assert test.shape[0] == 0, 'same zone cruising over more than 1 time interval not expanded'
+    print('.')
+
+    test = temp.loc[(temp['state'] == temp['state_next']) & (temp['reward'] == 0)]
+    assert test.shape[0] == 0, 'immediate trips are not merged'
+    print('.')
+
+    test = temp.loc[(temp['reward'] == 0) & (temp['action'] != temp['next_zone']) & (~temp['action_next'].isnull())]
+    assert test.shape[0] == 0, 'next zone must equal to action when reposition'
+    print('.')
     
 ## Processing
 
-# delta_t = 15
-# interval_index_table_file_path = 'data/interval_index_table_0.csv'
-# interval_index_table = pd.read_csv(interval_index_table_file_path)
-# interval_index_table['interval'] = pd.to_datetime(interval_index_table['interval']).dt.time
-# print('interval_index_table read')
+delta_t = 15
+interval_index_table_file_path = 'data/interval_index_table_0.csv'
+interval_index_table = pd.read_csv(interval_index_table_file_path)
+interval_index_table['interval'] = pd.to_datetime(interval_index_table['interval']).dt.time
+print('interval_index_table read')
 
-# cleaned_trip_df_file_path = 'data/trip_cleaned.csv'
-# shift = 'B'
-# CHUNK_SIZE = 1000000
-# save_path = 'data/SARSA_sample_sh{}_chunk{}.pickle'
-# cnter = 0
-# result_list = []
-# for chunk in tqdm(pd.read_csv(cleaned_trip_df_file_path, chunksize=CHUNK_SIZE), desc='Chunk'):
-#     cnter += 1
-# #     print('\nChunk ', cnter)
-#     save_sarsa(chunk, shift, interval_index_table, delta_t, save_path.format(shift, cnter))
-    
-    
-    
-    
-    
-    
-# MapReduce structure:
-# chunks = pd.read_csv(cleaned_trip_df_file_path, chunksize=1000)
-# print('mspping...')
-# processed_chunks = map(lambda c: process(c, shift=shift, interval_index_table=interval_index_table, 
-#                                          delta_t=delta_t), chunks)
-# print('reducing...')
-# result = reduce(concat, processed_chunks)
+est = Estimator(dir_path='data/', delta_t = delta_t)
+print('Estimator created for shortest paths')
 
-# result = pd.concat(result_list, axis=0)
-# print(result.shape)
-# with open(save_path, 'wb') as handle:
-#     pickle.dump(result, handle)
-# print('    saved at', save_path)
+cleaned_trip_df_file_path = 'data/trip_cleaned.csv'
+shift = 'B'
+CHUNK_SIZE = 10000
+VERSION = 3
+dir_name = f'data/sh{shift}_v{VERSION}'
+if not os.path.isdir(dir_name):
+    print(f'{dir_name} does not exist. Create dir')
+    os.makedirs(dir_name)
+    
+save_path = dir_name + '/sarsa_{}.pickle'
+cnter = 0
+result_list = []
+for chunk in tqdm(pd.read_csv(cleaned_trip_df_file_path, chunksize=CHUNK_SIZE), desc='Chunk'):
+    cnter += 1
+#     print('\nChunk ', cnter)
+    generate_SARSA_samples(chunk, shift, interval_index_table, delta_t,
+                           save_path.format(cnter), version=3)
+    break
+    
+    
+    
