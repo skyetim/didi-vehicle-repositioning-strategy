@@ -1,35 +1,17 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
+# import seaborn as sns
 import datetime
 import pickle
+from functools import reduce
+from tqdm import tqdm
 
 # sample_file_prefix = 'SARSA_eps_15m_v02_shA'
 # i=1
 # sample_list = []
 # with open(f'data/{sample_file_prefix}_{i}.pickle', 'rb') as f:
 #     sample_list.append(pickle.load(f))
-    
-    
-
-def save_sarsa(cleaned_trip_df, shift, interval_index_table, delta_t, save_path):
-    
-    output = convert_to_datetime(cleaned_trip_df)
-    output = assign_shift(output)
-    output = select_shift(output, shift)
-    output = get_full_shift_trips(output)
-    output = assign_unique_ep_id(output)
-    output = convert_to_time_index(output, interval_index_table, delta_t)
-    trip_df = get_trip_df(output)
-    repo_df = get_repo_df(trip_df)
-    cruise_df = get_cruise_df(repo_df)
-    repo_df = combine_repo_and_cruise_df(repo_df, cruise_df)
-    sarsa_df = to_SARSA_format(trip_df, repo_df)
-    
-    with open(save_path, 'wb') as handle:
-        pickle.dump(sarsa_df, handle)
-    print('    saved at', save_path)
 
 
 def convert_to_datetime(cleaned_trip_df):
@@ -181,7 +163,16 @@ def get_cruise_df(reposition_df):
     reposition_df.dropna(subset=['kept'], inplace=True)
     reposition_df.drop(columns=['kept'], inplace=True)
 
+    if cruise_list == []:  ## i.e. no cruise needs expanding 
+        return None
+    
     cruise_df = pd.DataFrame(np.repeat(np.array(cruise_list), repeat_size, axis=0))
+#     if len(cruise_df.columns) != len(reposition_df.columns):
+#         print('repeat_size', repeat_size)
+#         print('cruise: ', len(cruise_df.columns))
+#         print('reposition_df: ', len(reposition_df.columns))
+#         print(cruise_df.columns)
+    
     cruise_df.columns = reposition_df.columns
 
     ## Cast type back to int
@@ -202,9 +193,13 @@ def get_cruise_df(reposition_df):
     return cruise_df
 
 def combine_repo_and_cruise_df(reposition_df, cruise_df):
-    cruise_df_2 = cruise_df.groupby(['episode', 'sub_index', 'loc', 'reward', 'type', 'loc_next']).apply(expand_cruise)
-    reposition_df = pd.concat([reposition_df, cruise_df_2], sort=True).sort_values(['episode', 'sub_index'])
-    reposition_df['expanded_index'] = reposition_df['expanded_index'].fillna(0)
+    if cruise_df is not None:
+        cruise_df_2 = cruise_df.groupby(['episode', 'sub_index', 'loc', 'reward', 'type', 'loc_next']).apply(expand_cruise)
+        reposition_df = pd.concat([reposition_df, cruise_df_2], sort=True).sort_values(['episode', 'sub_index'])
+        reposition_df['expanded_index'] = reposition_df['expanded_index'].fillna(0)
+    else:
+        reposition_df['expanded_index'] = 0
+
     return reposition_df
 
 def to_SARSA_format(trip_df, reposition_df):
@@ -234,6 +229,42 @@ def to_SARSA_format(trip_df, reposition_df):
     sarsa_df = sarsa_df[['episode', 'state', 'action', 'reward', 'state_next', 'action_next']]
     return sarsa_df
 
+def save_sarsa(cleaned_trip_df, shift, interval_index_table, delta_t, save_path):
+    
+    output = convert_to_datetime(cleaned_trip_df)
+    output = assign_shift(output)
+    output = select_shift(output, shift)
+    output = get_full_shift_trips(output)
+    output = assign_unique_ep_id(output)
+    output = convert_to_time_index(output, interval_index_table, delta_t)
+    trip_df = get_trip_df(output)
+    repo_df = get_repo_df(trip_df)
+    cruise_df = get_cruise_df(repo_df)
+    repo_df = combine_repo_and_cruise_df(repo_df, cruise_df)
+    sarsa_df = to_SARSA_format(trip_df, repo_df)
+    
+    with open(save_path, 'wb') as handle:
+        pickle.dump(sarsa_df, handle)
+    print('    saved at', save_path)
+    
+# def process(cleaned_trip_df, shift, interval_index_table, delta_t):
+#     print('.')
+#     output = convert_to_datetime(cleaned_trip_df)
+#     output = assign_shift(output)
+#     output = select_shift(output, shift)
+#     output = get_full_shift_trips(output)
+#     output = assign_unique_ep_id(output)
+#     output = convert_to_time_index(output, interval_index_table, delta_t)
+#     trip_df = get_trip_df(output)
+#     repo_df = get_repo_df(trip_df)
+#     cruise_df = get_cruise_df(repo_df)
+#     repo_df = combine_repo_and_cruise_df(repo_df, cruise_df)
+#     sarsa_df = to_SARSA_format(trip_df, repo_df)
+#     return sarsa_df
+
+def concat(prev_result, current_df):
+    return pd.concat([prev_result, pd.DataFrame(current_df)], axis=0)
+    
 ## Processing
 
 delta_t = 15
@@ -245,11 +276,24 @@ print('interval_index_table read')
 cleaned_trip_df_file_path = 'data/trip_cleaned.csv'
 shift = 'B'
 CHUNK_SIZE = 1000000
-save_path = 'data/chunk_read_test{}.pickle'
+save_path = 'data/SARSA_sample_sh{}_chunk{}.pickle'
 cnter = 0
-for chunk in pd.read_csv(cleaned_trip_df_file_path, chunksize=CHUNK_SIZE):
+result_list = []
+for chunk in tqdm(pd.read_csv(cleaned_trip_df_file_path, chunksize=CHUNK_SIZE), desc='Chunk'):
     cnter += 1
-    print('\nChunk ', cnter)
-    save_sarsa(chunk, shift, interval_index_table, delta_t, save_path.format(cnter))
+#     print('\nChunk ', cnter)
+    save_sarsa(chunk, shift, interval_index_table, delta_t, save_path.format(shift, cnter))
+    
+# MapReduce structure:
+# chunks = pd.read_csv(cleaned_trip_df_file_path, chunksize=1000)
+# print('mspping...')
+# processed_chunks = map(lambda c: process(c, shift=shift, interval_index_table=interval_index_table, 
+#                                          delta_t=delta_t), chunks)
+# print('reducing...')
+# result = reduce(concat, processed_chunks)
 
-
+# result = pd.concat(result_list, axis=0)
+# print(result.shape)
+# with open(save_path, 'wb') as handle:
+#     pickle.dump(result, handle)
+# print('    saved at', save_path)
