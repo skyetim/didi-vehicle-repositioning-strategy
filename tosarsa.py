@@ -172,14 +172,60 @@ def get_repo_df(trip_df):
 ## insert rows to dataframe if cruising takes more than 1 interval
 def _expand_by_time_step_helper(selected_df):
     df = selected_df.copy()
-    lower_time = int(min(df['time']))
-    upper_time = int(max(df['time_next']))
+    assert df['time'].unique().shape[0] == 1
+    assert df['time_next'].unique().shape[0] == 1
     
-    df['time'] = range(lower_time, upper_time)
-    df['time_next'] = range(lower_time+1, upper_time+1)
-    df['expanded_index'] = range(upper_time-lower_time) ##for sorting within expanded rows
+    lower_time = int(df['time'].unique())
+    upper_time = int(df['time_next'].unique())
+    
+    max_time_index = 60/delta_t*24 
+    
+    t = df.shape[0]
+    ## go over midnight
+    time_list_len = t + 1
+    if upper_time < lower_time:
+        upper_time = upper_time + max_time_index
+        new_time_list = np.linspace(lower_time, upper_time, time_list_len, endpoint=True)
+        new_time_list = np.where(new_time_list < max_time_index, new_time_list, new_time_list%max_time_index)
+        new_time_list = new_time_list.astype(int)
+#         new_time_list = [int(i) for i in new_time_list if i < max_time_index else int(i%max_time_index)]
+    else:
+        new_time_list = np.linspace(lower_time, upper_time, time_list_len, endpoint=True).astype(int)
+        
+    df['time'] = new_time_list[:t]
+    df['time_next'] = new_time_list[-t:]
+    df['expanded_index'] = np.linspace(0, upper_time-lower_time, t, endpoint=False).astype(int) ##for sorting within expanded rows
+    
+    
+#     if upper_time == max_time_index - 1:
+#         adjusted_time = [i+max_time_index for i in df['time'] if i < 20 else i]
+#         lower_time = int(min(adjusted_time))
+#         upper_time = int(max(adjusted_time))
+#         current_new_time = np.arange(lower_time, upper_time, 1) / (max_time_index)
+#         next_new_time = np.arange(lower_time+1, upper_time+1, 1) / (max_time_index)
+#     else:
+#         current_new_time = np.arange(lower_time, upper_time, 1)
+#         next_new_time = np.arange(lower_time+1, upper_time+1, 1)
+        
+#     df['time'] = current_new_time
+#     df['time_next'] = next_new_time
+#     df['expanded_index'] = range(upper_time-lower_time) ##for sorting within expanded rows
     return df
 
+"""
+Return a list of time index. It accounts for the case when the index goes over midnight.
+The length is t+1 for t is #rows of df. Current time takes the first t indices and the
+next_time takes the last t indices from the list. 
+"""
+# def _get_time_list(original_time_list):
+#     max_time_index = 60/delta_t*24
+#     start_time = original_time_list[0]
+ 
+#     if (max_time_index-1) in original_time_list:
+#         new_time_list = [i+max_time_index for i in original_time_list if i < 20 else i]
+#          end_time = original_time_list[-1]
+#     start_time = 
+    
 ## extract rows that will be expanded from the rest. Return the expanded part and a list of which rows in repo_df to be kept. 
 def expand_by_time_step(reposition_df):
     expand_list = []
@@ -228,12 +274,13 @@ def _expand_by_zones_helper(df, path):
     df['loc_next'] = path[-t:]
     
     # time
-    lower_time = min(df['time'])
-    upper_time = max(df['time_next'])
-    time_list = np.linspace(lower_time, upper_time, t+1, endpoint=True).astype(int)
-    df['time'] = time_list[:t]
-    df['time_next'] = time_list[-t:]
-    df['expanded_index'] = np.linspace(lower_time, upper_time, t, endpoint=True) ##for sorting within expanded rows
+    df = _expand_by_time_step_helper(df)
+#     lower_time = min(df['time'])
+#     upper_time = max(df['time_next'])
+#     time_list = np.linspace(lower_time, upper_time, t+1, endpoint=True).astype(int)
+#     df['time'] = time_list[:t]
+#     df['time_next'] = time_list[-t:]
+#     df['expanded_index'] = np.linspace(lower_time, upper_time, t, endpoint=True) ##for sorting within expanded rows
     return df
 
 def expand_by_zones(repo_df):
@@ -393,6 +440,11 @@ def test_dataset(df):
 
     test = temp.loc[(temp['reward'] == 0) & (temp['action'] != temp['next_zone']) & (~temp['action_next'].isnull())]
     assert test.shape[0] == 0, 'next zone must equal to action when reposition'
+    print('.')
+    
+    max_time_index = 60/delta_t*24
+    test = temp.loc[(temp['cur_time'] >= max_time_index) | (temp['next_time'] >= max_time_index)]
+    assert test.shape[0] == 0, 'time index exceeds possible value'
     print('.')
     
 ## Processing
