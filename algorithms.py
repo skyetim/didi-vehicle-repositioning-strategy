@@ -6,6 +6,7 @@ import pandas as pd
 import plotting
 import sys
 from tqdm.auto import trange
+import pickle
 
 
 def make_epsilon_greedy_policy(Q, epsilon, nA):
@@ -104,7 +105,8 @@ def sarsa(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
     return Q, stats
 
 
-def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1., alpha=0.5, batch_size=32):
+def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1., alpha=0.5, batch_size=32, history_save_path=None,
+                   Q_save_path=None):
     """
     SARSA algorithm: On-policy TD control. Finds the optimal epsilon-greedy policy.
 
@@ -148,5 +150,13 @@ def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1.,
         if cur_episode % 100 == 0:
             history['mean_max_q'].append(np.mean([i.max() for i in Q.values()]))
         history['mean_td_delta'].append(batch_td_error/batch_size)
+        
+        check_point = int(num_episodes//4)
+        if (cur_episode % check_point == 0):
+            with open(Q_save_path, 'wb') as handle:
+                pickle.dump(dict(Q), handle)
+            with open(history_save_path, 'wb') as handle:
+                pickle.dump(dict(history), handle)
+            print(f'{cur_episode // check_point *25}%: checkpoints saved at {Q_save_path} and {history_save_path}')
 
     return Q, history

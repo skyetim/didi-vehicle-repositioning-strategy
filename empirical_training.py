@@ -13,10 +13,10 @@ from utils import plot_td_error
 ## variables to set
 CHUNK_NUM = 6
 sample_file_prefix = 'SARSA_eps_15m_v02_shA'
-emp_Q_save_path = 'output/emp_Q_v02_shA.pkl'
-emp_history_save_path = 'output/emp_history_v02_shA.pkl'
-average_Q_save_path = 'output/mean_max_Q_v02_shA.png'
-td_error_save_path = 'output/mean_td_error_v02_shA.png'
+emp_Q_save_path = 'output/shA_1203_full/emp_Q_v02_shA.pkl'
+emp_history_save_path = 'output/shA_1203_full/emp_history_v02_shA.pkl'
+average_Q_save_path = 'output/shA_1203_full/mean_max_Q_v02_shA.png'
+td_error_save_path = 'output/shA_1203_full/mean_td_error_v02_shA.png'
 
 sample_list = []
 for i in range(1, CHUNK_NUM+1):
@@ -27,15 +27,20 @@ samples = pd.concat(sample_list, axis=0)
 print('sample shape: ', samples.shape)
 
 #### need to set
-TRAIN_ITERATION = len(samples)//4*3
+TRAIN_ITERATION = 100 #len(samples)//2*3
 
 
 env = NYCEnv(delta_t=10)
 print(f'Number of Iterations: {TRAIN_ITERATION}')
-Q, history = sarsa_empirical(samples, env.action_space.n, TRAIN_ITERATION)
+Q, history = sarsa_empirical(samples, env.action_space.n, TRAIN_ITERATION, 
+                             history_save_path=emp_history_save_path, 
+                             Q_save_path=emp_Q_save_path)
 
-with open(emp_Q_save_path, 'wb') as fq, open(emp_history_save_path, 'wb') as fs:
+
+with open(emp_Q_save_path, 'wb') as fq:
     pickle.dump(dict(Q), fq)
+    
+with open(emp_history_save_path, 'wb') as fs:
     pickle.dump(dict(history), fs)
     
 print(f'saved at {emp_Q_save_path} and {emp_history_save_path}')
