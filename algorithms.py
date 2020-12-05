@@ -106,7 +106,7 @@ def sarsa(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
 
 
 def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1., alpha=0.5, batch_size=32, history_save_path=None,
-                   Q_save_path=None):
+                   Q_save_path=None, Q=None, history=None):
     """
     SARSA algorithm: On-policy TD control. Finds the optimal epsilon-greedy policy.
 
@@ -116,7 +116,11 @@ def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1.,
         discount_factor: Gamma discount factor.
         alpha: TD learning rate.
         epsilon: Chance the sample a random action. Float betwen 0 and 1.
-
+        history_save_path: path to periodically save history
+        Q_save_path: path to periodically save Q
+        Q: initial Q to start the training with. Initialized to all 0 if None
+        history: initial history to start the training with. Initialized to all 0 if None
+    
     Returns:
         A tuple (Q, stats).
         Q is the optimal action-value function, a dictionary mapping state -> action values.
@@ -125,8 +129,10 @@ def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1.,
 
     # The final action-value function.
     # A nested dictionary that maps state -> (action -> action-value).
-    Q = defaultdict(lambda: np.zeros(num_actions))
-    history = defaultdict(list)
+    if Q is None:
+        Q = defaultdict(lambda: np.zeros(num_actions))
+    if history is None:
+        history = defaultdict(list)
 
     total_samples = samples.shape[0]
     num_episodes = num_episodes or (total_samples // batch_size)
@@ -151,12 +157,13 @@ def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1.,
             history['mean_max_q'].append(np.mean([i.max() for i in Q.values()]))
         history['mean_td_delta'].append(batch_td_error/batch_size)
         
-        check_point = int(num_episodes//4)
-        if (cur_episode % check_point == 0):
+        cp = 1000000 ## save every `cp` iterations
+        save_every_percent = 10
+        if (cur_episode+1) % cp == 0:
             with open(Q_save_path, 'wb') as handle:
                 pickle.dump(dict(Q), handle)
             with open(history_save_path, 'wb') as handle:
                 pickle.dump(dict(history), handle)
-            print(f'{cur_episode // check_point *25}%: checkpoints saved at {Q_save_path} and {history_save_path}')
+            print(f'{cp // num_episodes * 100}%: checkpoints saved at {Q_save_path} and {history_save_path}')
 
     return Q, history
