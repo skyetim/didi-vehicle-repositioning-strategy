@@ -131,4 +131,30 @@ def plot_td_error(mean_td_delta, save_path, n=5000):
     print('saved at ',save_path)
     plt.show()
     
-
+def plot_start_end_time(df):
+    '''
+    Plot start and end time indices of each episode.
+    
+    Args:
+        df: Full SARSA dataset to be plot
+    '''
+    
+    samples = df.copy()
+    # extract time from 'state' column (second element in the tuple)
+    samples['cur_time'] = [i[1] for i in samples['state']]
+    
+    # get the start and end time of each episode
+    episode_time = samples.groupby('episode').\
+                    agg(['first', 'last'])[['cur_time']].rename(columns={'first':'start_time','last':'end_time'})
+    episode_time.columns = episode_time.columns.droplevel(0)
+    
+    # plot
+    fig, ax = plt.subplots(1, 2, figsize=(10, 3))
+    ax[0].hist(episode_time.start_time)
+    ax[1].hist(episode_time.end_time)
+    ax[0].set_title('Start')
+    ax[0].set_xlabel('Time Index')
+    ax[1].set_title('End')
+    ax[1].set_xlabel('Time Index')
+#     fig.savefig('../start_end_time.png', bbox_inches = 'tight')   
+    return fig
