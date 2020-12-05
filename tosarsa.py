@@ -243,7 +243,7 @@ def expand_by_time_step(reposition_df):
 
     # if no rows to be expand, return None
     if expand_list == []:
-        return None, None, None
+        return None, None
     
     expand_df_list = [pd.DataFrame(np.repeat(np.array([np.array(current_df)]), 
                                              np.array(current_repeatsize), axis=0),
@@ -427,17 +427,38 @@ def test_dataset(df):
 
     temp['cur_time'] = [i[1] for i in temp['state']]
     temp['next_time'] = [i[1] for i in temp['state_next']]
+    
+    temp['state'] = temp['state'].astype('str')
+    temp['state_next'] = temp['state_next'].astype('str')
+    
+    temp = temp.astype({'episode': 'Int64',
+                          'action': 'Int64',
+                          'action_next': 'Int64',
+                          'cur_zone': 'Int64',
+                          'next_zone': 'Int64',
+                          'cur_time': 'Int64',
+                          'next_time': 'Int64'})
+    
 
+    
+    test = temp.loc[temp['state'].isnull()]
+    assert test.shape[0] == 0, 'current states cannot be NaN'
+    print('.')
+    
+    test = temp.loc[temp['state_next'].isnull()]
+    assert test.shape[0] == 0, 'current states cannot be NaN'
+    print('.')
+    
     test = temp.loc[(temp['next_time'] - temp['cur_time'] > 1) & 
                          (temp['reward'] == 0) & 
                          (temp['cur_zone'] == temp['next_zone'])]
     assert test.shape[0] == 0, 'same zone cruising over more than 1 time interval not expanded'
     print('.')
-
+    
     test = temp.loc[(temp['state'] == temp['state_next']) & (temp['reward'] == 0)]
     assert test.shape[0] == 0, 'immediate trips are not merged'
     print('.')
-
+    
     test = temp.loc[(temp['reward'] == 0) & (temp['action'] != temp['next_zone']) & (~temp['action_next'].isnull())]
     assert test.shape[0] == 0, 'next zone must equal to action when reposition'
     print('.')
@@ -460,7 +481,7 @@ delta_t = 15
 interval_index_table_file_path = 'data/interval_index_table_0.csv'
 cleaned_trip_df_file_path = 'data/trip_cleaned.csv'
 shift = 'B'
-CHUNK_SIZE = 10000
+CHUNK_SIZE = 1000000
 VERSION = 3
 dir_name = f'data/sh{shift}_v{VERSION}'
 save_path = dir_name + '/sarsa_{}.pickle'
@@ -484,7 +505,6 @@ for chunk in tqdm(pd.read_csv(cleaned_trip_df_file_path, chunksize=CHUNK_SIZE), 
 #     print('\nChunk ', cnter)
     generate_SARSA_samples(chunk, shift, interval_index_table, delta_t,
                            save_path.format(cnter), version=3)
-    break
     
     
     
