@@ -9,7 +9,7 @@ import networkx as nx
 import pickle
 
 
-def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32, all_nodes=False):
+def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32, all_nodes=False, save_path = None):
     q = open(q_path, 'rb')
     data = pickle.load(q)
     edge = [] # action to another zone
@@ -74,12 +74,13 @@ def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32, all_nodes=F
     p = nx.get_node_attributes(G,'pos')
     fig = plt.figure(3,figsize=(30,30)) 
     nx.draw_networkx_nodes(G, pos=p, node_color='white', node_size=500, edgecolors = color, linewidths=width)
-    nx.draw_networkx_labels(G, pos=p, label=G.nodes, font_size=10)
+    nx.draw_networkx_labels(G, pos=p, font_size=10)
     nx.draw_networkx_edges(G, pos = p, width=3, edge_color='red')
     ax = plt.gca() # get the current axis
     ax.collections[0].set_edgecolor(color) 
     fig.suptitle('Optimal Action for Taxi Zones', fontsize=30, y=0.9)
-    #plt.savefig('../optimal_q.png', bbox_inches = 'tight')
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches = 'tight')
     plt.show()
 
     return v
