@@ -6,28 +6,38 @@ import numpy as np
 import pandas as pd
 from snippet import notify
 from utils import plot_td_error
+import os
 
 # with open('data/SARSA_eps.pickle', 'rb') as f:
 #     samples = pickle.load(f)
 
 ## variables to set
-CHUNK_NUM = 6
-sample_file_prefix = 'SARSA_eps_15m_v02_shA'
-emp_Q_save_path = 'output/shA_1203_full/emp_Q_v02_shA.pkl'
-emp_history_save_path = 'output/shA_1203_full/emp_history_v02_shA.pkl'
-average_Q_save_path = 'output/shA_1203_full/mean_max_Q_v02_shA.png'
-td_error_save_path = 'output/shA_1203_full/mean_td_error_v02_shA.png'
+CHUNK_NUM = 14
+# sample_file_prefix = 'SARSA_eps_15m_v02_shA'
+dir_name = 'shA_v3'
+output_dir_name = f'output/{dir_name}_1204'
+
+emp_Q_save_path = f'{output_dir_name}/emp_Q_v02_shA.pkl'
+emp_history_save_path = f'{output_dir_name}/emp_history_shA.pkl'
+average_Q_save_path = f'{output_dir_name}/mean_max_Q_shA.png'
+td_error_save_path = f'{output_dir_name}/mean_td_error_shA.png'
+
+if not os.path.isdir(output_dir_name):
+    print(f'{output_dir_name} does not exist. Create dir')
+    os.makedirs(output_dir_name)
 
 sample_list = []
+path = 'data/{}/sarsa_{}.pickle' #data path
+ 
 for i in range(1, CHUNK_NUM+1):
-    print(f'reading data/{sample_file_prefix}_{i}.pickle')
-    with open(f'data/{sample_file_prefix}_{i}.pickle', 'rb') as f:
+    print(path.format(dir_name, i))
+    with open(path.format(dir_name, i), 'rb') as f:
         sample_list.append(pickle.load(f))
 samples = pd.concat(sample_list, axis=0)
 print('sample shape: ', samples.shape)
 
 #### need to set
-TRAIN_ITERATION = 100 #len(samples)//2*3
+TRAIN_ITERATION = len(samples)//2
 
 
 env = NYCEnv(delta_t=10)
@@ -48,13 +58,13 @@ print(f'saved at {emp_Q_save_path} and {emp_history_save_path}')
 
 plt.plot(range(len(history['mean_max_q'])), history['mean_max_q'])
 plt.title('Average Max Q over States')
-plt.xlabel('Epsisode (in a hundred)')
+plt.xlabel('Iterations (in a hundred)')
 plt.savefig(average_Q_save_path, dpi=72)
 plt.clf()
 print(f'saved at {average_Q_save_path}')
 
-plot_td_error(history['mean_td_delta'], n=5000, save_path=td_error_save_path)
 
+plot_td_error(history['mean_td_delta'], n=5000, save_path=td_error_save_path)
 # plt.plot(range(len(history['mean_td_delta'])), history['mean_td_delta'])
 # plt.title('Average TD Error')
 # plt.xlabel('Epsisode (in a hundred)')
