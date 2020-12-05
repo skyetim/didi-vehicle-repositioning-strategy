@@ -108,7 +108,7 @@ def plot_v_s(v):
     return 
 
 
-def plot_td_error(mean_td_delta, save_path, n=5000):
+def plot_td_error(mean_td_delta, save_path=None, n=5000):
     '''
     Plot the td error
     Args:
@@ -127,8 +127,9 @@ def plot_td_error(mean_td_delta, save_path, n=5000):
     # plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x/1000) + 'K'))
     plt.gca().xaxis.set_major_formatter(ticker.EngFormatter())
     plt.title('Average TD Error (moving average = {})'.format(n));
-    plt.savefig(save_path, bbox_inches = 'tight')
-    print('saved at ',save_path)
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches = 'tight')
+        print('saved at ',save_path)
     plt.show()
     
 def plot_start_end_time(df):
@@ -157,4 +158,4 @@ def plot_start_end_time(df):
     ax[1].set_title('End')
     ax[1].set_xlabel('Time Index')
 #     fig.savefig('../start_end_time.png', bbox_inches = 'tight')   
-    return fig
+
