@@ -164,6 +164,6 @@ def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1.,
                 pickle.dump(dict(Q), handle)
             with open(history_save_path, 'wb') as handle:
                 pickle.dump(dict(history), handle)
-            print(f'{cp // num_episodes * 100}%: checkpoints saved at {Q_save_path} and {history_save_path}')
+            print(f'{cp / num_episodes * 100}%: checkpoints saved at {Q_save_path} and {history_save_path}')
 
     return Q, history

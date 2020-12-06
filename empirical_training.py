@@ -11,7 +11,8 @@ import os
 # with open('data/SARSA_eps.pickle', 'rb') as f:
 #     samples = pickle.load(f)
 
-## variables to set
+## VARIABLE TO SET
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 CHUNK_NUM = 14
 # sample_file_prefix = 'SARSA_eps_15m_v02_shA'
 dir_name = 'shA_v3'
@@ -21,13 +22,20 @@ emp_Q_save_path = f'{output_dir_name}/emp_Q_v02_shA.pkl'
 emp_history_save_path = f'{output_dir_name}/emp_history_shA.pkl'
 average_Q_save_path = f'{output_dir_name}/mean_max_Q_shA.png'
 td_error_save_path = f'{output_dir_name}/mean_td_error_shA.png'
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 if not os.path.isdir(output_dir_name):
     print(f'{output_dir_name} does not exist. Create dir')
     os.makedirs(output_dir_name)
 
 sample_list = []
+
+## VARIABLE TO SET
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 path = 'data/{}/sarsa_{}.pickle' #data path
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
  
 for i in range(1, CHUNK_NUM+1):
     print(path.format(dir_name, i))
@@ -36,15 +44,24 @@ for i in range(1, CHUNK_NUM+1):
 samples = pd.concat(sample_list, axis=0)
 print('sample shape: ', samples.shape)
 
-#### need to set
-TRAIN_ITERATION = len(samples)//2
+
+## VARIABLE TO SET
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+TRAIN_ITERATION = len(samples)
+
+## load Q and history
+with open(f'{output_dir_name}/emp_Q_v02_shA.pkl', 'rb') as f:
+    Q = pickle.load(f)
+with open(f'{output_dir_name}/emp_history_shA.pkl', 'rb') as f:
+    history = pickle.load(f)
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 env = NYCEnv(delta_t=10)
 print(f'Number of Iterations: {TRAIN_ITERATION}')
 Q, history = sarsa_empirical(samples, env.action_space.n, TRAIN_ITERATION, 
                              history_save_path=emp_history_save_path, 
-                             Q_save_path=emp_Q_save_path)
+                             Q_save_path=emp_Q_save_path,Q=Q, history=history)
 
 
 with open(emp_Q_save_path, 'wb') as fq:
