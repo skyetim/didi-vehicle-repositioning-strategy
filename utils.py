@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib import ticker
+import matplotlib.ticker as mticker
 import numpy as np
 import fiona
 import shapely
