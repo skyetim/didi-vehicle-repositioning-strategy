@@ -125,7 +125,7 @@ def plot_td_error(mean_td_delta, save_path=None, n=5000):
     plt.xlabel('iterations');
     plt.ylabel('Mean TD Error');
     # plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x/1000) + 'K'))
-    plt.gca().xaxis.set_major_formatter(ticker.EngFormatter())
+    plt.gca().xaxis.set_major_formatter(mticker.EngFormatter())
     plt.title('Average TD Error (moving average = {})'.format(n));
     if save_path is not None:
         plt.savefig(save_path, bbox_inches = 'tight')
