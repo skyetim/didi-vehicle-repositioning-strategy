@@ -475,36 +475,36 @@ def test_dataset(df):
     
     
 
-# ++++++++++++++++++++++++
-## must set the following. Possible overwriting if input uncarefully
-delta_t = 15
-interval_index_table_file_path = 'data/interval_index_table_0.csv'
-cleaned_trip_df_file_path = 'data/trip_cleaned.csv'
-shift = 'B'
-CHUNK_SIZE = 1000000
-VERSION = 3
-dir_name = f'data/sh{shift}_v{VERSION}'
-save_path = dir_name + '/sarsa_{}.pickle'
-# ++++++++++++++++++++++++
+# # ++++++++++++++++++++++++
+# ## must set the following. Possible overwriting if input uncarefully
+# delta_t = 15
+# interval_index_table_file_path = 'data/interval_index_table_0.csv'
+# cleaned_trip_df_file_path = 'data/trip_cleaned.csv'
+# shift = 'B'
+# CHUNK_SIZE = 1000000
+# VERSION = 3
+# dir_name = f'data/sh{shift}_v{VERSION}'
+# save_path = dir_name + '/sarsa_{}.pickle'
+# # ++++++++++++++++++++++++
 
-interval_index_table = pd.read_csv(interval_index_table_file_path)
-interval_index_table['interval'] = pd.to_datetime(interval_index_table['interval']).dt.time
-print('interval_index_table read')
+# interval_index_table = pd.read_csv(interval_index_table_file_path)
+# interval_index_table['interval'] = pd.to_datetime(interval_index_table['interval']).dt.time
+# print('interval_index_table read')
 
-est = Estimator(dir_path='data/', delta_t = delta_t)
-print('Estimator created for shortest paths')
+# est = Estimator(dir_path='data/', delta_t = delta_t)
+# print('Estimator created for shortest paths')
 
-if not os.path.isdir(dir_name):
-    print(f'{dir_name} does not exist. Create dir')
-    os.makedirs(dir_name)
+# if not os.path.isdir(dir_name):
+#     print(f'{dir_name} does not exist. Create dir')
+#     os.makedirs(dir_name)
 
-cnter = 0
-result_list = []
-for chunk in tqdm(pd.read_csv(cleaned_trip_df_file_path, chunksize=CHUNK_SIZE), desc='Chunk'):
-    cnter += 1
-#     print('\nChunk ', cnter)
-    generate_SARSA_samples(chunk, shift, interval_index_table, delta_t,
-                           save_path.format(cnter), version=3)
+# cnter = 0
+# result_list = []
+# for chunk in tqdm(pd.read_csv(cleaned_trip_df_file_path, chunksize=CHUNK_SIZE), desc='Chunk'):
+#     cnter += 1
+# #     print('\nChunk ', cnter)
+#     generate_SARSA_samples(chunk, shift, interval_index_table, delta_t,
+#                            save_path.format(cnter), version=3)
     
     
     
