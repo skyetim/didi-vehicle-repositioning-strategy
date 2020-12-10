@@ -468,11 +468,6 @@ def test_dataset(df):
     assert test.shape[0] == 0, 'time index exceeds possible value'
     print('.')
     
-
-    
-    
-    
-    
     
 
 # ++++++++++++++++++++++++
@@ -483,7 +478,7 @@ cleaned_trip_df_file_path = 'data/trip_cleaned.csv'
 shift = 'B'
 CHUNK_SIZE = 1000000
 VERSION = 3
-dir_name = f'data/sh{shift}_v{VERSION}'
+dir_name = f'data/sh{shift}_v{VERSION+1}'
 save_path = dir_name + '/sarsa_{}.pickle'
 # ++++++++++++++++++++++++
 

@@ -8,6 +8,9 @@ from shapely.geometry import shape,mapping, Point, Polygon, MultiPolygon
 import networkx as nx
 import pickle
 
+title_font = {'size':'18', 'color':'black', 'weight':'normal',
+          'verticalalignment':'bottom'} # Bottom vertical alignment for more space
+axis_font = {'size':'16'}
 
 def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32, all_nodes=False, save_path = None):
     q = open(q_path, 'rb')
@@ -107,6 +110,19 @@ def plot_v_s(v):
     plt.show() 
     return 
 
+"""
+Plot history of Q. 
+@param 
+    history: Q history df, recorded every 100 iterations.
+"""
+def plot_history(history, save_path=None):
+    x_index = np.arange(0, len(history))*100/1000000
+    plt.plot(x_index, history)
+    plt.title('Average Max Q', **title_font)
+    plt.xlabel('Iterations (Million)', **axis_font)
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches = 'tight')
+    plt.show()
 
 def plot_td_error(mean_td_delta, save_path=None, n=5000):
     '''
@@ -119,14 +135,14 @@ def plot_td_error(mean_td_delta, save_path=None, n=5000):
     mean_td_delta = pd.DataFrame(mean_td_delta)
     n = 5000
     mean_td_delta['MA'] = mean_td_delta.rolling(window=n).mean()
-    mean_td_delta.MA.plot(figsize=(15,5),legend=None);
+    mean_td_delta.MA.plot(figsize=(7,5),legend=None);
 
-    plt.rcParams.update({'font.size': 20})
-    plt.xlabel('iterations');
-    plt.ylabel('Mean TD Error');
+#     plt.rcParams.update({'font.size': 15})
+    plt.xlabel('Iterations', **axis_font);
+#     plt.ylabel('Mean TD Error', **axis_font);
     # plt.gca().xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{}'.format(x/1000) + 'K'))
     plt.gca().xaxis.set_major_formatter(mticker.EngFormatter())
-    plt.title('Average TD Error (moving average = {})'.format(n));
+    plt.title('Average TD Error (moving average = {})'.format(n), **title_font);
     if save_path is not None:
         plt.savefig(save_path, bbox_inches = 'tight')
         print('saved at ',save_path)

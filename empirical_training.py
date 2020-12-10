@@ -15,13 +15,13 @@ import os
 ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 CHUNK_NUM = 14
 # sample_file_prefix = 'SARSA_eps_15m_v02_shA'
-dir_name = 'shA_v3'
-output_dir_name = f'output/{dir_name}_1204'
+dir_name = 'shB_v4'
+output_dir_name = f'output/{dir_name}'
 
-emp_Q_save_path = f'{output_dir_name}/emp_Q_v02_shA.pkl'
-emp_history_save_path = f'{output_dir_name}/emp_history_shA.pkl'
-average_Q_save_path = f'{output_dir_name}/mean_max_Q_shA.png'
-td_error_save_path = f'{output_dir_name}/mean_td_error_shA.png'
+emp_Q_save_path = f'{output_dir_name}/emp_Q_shB.pkl'
+emp_history_save_path = f'{output_dir_name}/emp_history_shB.pkl'
+average_Q_save_path = f'{output_dir_name}/mean_max_Q_shB.png'
+td_error_save_path = f'{output_dir_name}/mean_td_error_shB.png'
 ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -49,11 +49,13 @@ print('sample shape: ', samples.shape)
 ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 TRAIN_ITERATION = len(samples)
 
-## load Q and history
-with open(f'{output_dir_name}/emp_Q_v02_shA.pkl', 'rb') as f:
-    Q = pickle.load(f)
-with open(f'{output_dir_name}/emp_history_shA.pkl', 'rb') as f:
-    history = pickle.load(f)
+# ## load Q and history
+# with open(f'{output_dir_name}/emp_Q_v02_shA.pkl', 'rb') as f:
+#     Q = pickle.load(f)
+# with open(f'{output_dir_name}/emp_history_shA.pkl', 'rb') as f:
+#     history = pickle.load(f)
+Q = None
+history = None
 ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 

@@ -157,13 +157,13 @@ def sarsa_empirical(samples, num_actions, num_episodes=None, discount_factor=1.,
             history['mean_max_q'].append(np.mean([i.max() for i in Q.values()]))
         history['mean_td_delta'].append(batch_td_error/batch_size)
         
-        cp = 1000000 ## save every `cp` iterations
+        cp = 500000 ## save every `cp` iterations
         save_every_percent = 10
         if (cur_episode+1) % cp == 0:
             with open(Q_save_path, 'wb') as handle:
                 pickle.dump(dict(Q), handle)
             with open(history_save_path, 'wb') as handle:
                 pickle.dump(dict(history), handle)
-            print(f'{cp / num_episodes * 100}%: checkpoints saved at {Q_save_path} and {history_save_path}')
+            print(f'checkpoints saved at {Q_save_path} and {history_save_path}')
 
     return Q, history
