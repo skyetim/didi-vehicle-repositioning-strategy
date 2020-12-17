@@ -86,6 +86,11 @@ def plot_optimal_q(q_path='Q1.pkl', shp_file='taxi_zones.shp', t=32, all_nodes=F
         plt.savefig(save_path, bbox_inches = 'tight')
     plt.show()
 
+    pr = nx.pagerank_numpy(G, alpha=0.85)
+    pr = dict(sorted(pr.items(), key=lambda pr: pr[1],reverse=True))
+    
+    print(list(pr.keys()))
+          
     return v
 
 
