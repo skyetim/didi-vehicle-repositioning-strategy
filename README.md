@@ -18,7 +18,7 @@ An additional video can be seen at [this Youtube link](https://www.youtube.com/w
 ## Key results
 1. In the simulated environment, drivers earn \$215 in one shift by following the empirical policy, and earn \$236 by following the derived policy, which means that drivers can earn 9\% more per shift if following the new policy
 
-2. We find an optimal action for each taxi zone at any given time. The following plot show an example of optimal action from 10:00 to 10:15 in NYC. You can also zoom in the map and change time interactively in [this notebook](notebook/interactive_q_plot.ipynb)
+2. We find an optimal action for each taxi zone at any given time. The following plot show an example of optimal action from 10:00 to 10:15 in NYC. You can also zoom in the map and change time interactively in [this notebook](notebooks/interactive_q_plot.ipynb)
 ![Optimal policy visualization example](fig/optimal_q.png)
 
 ## Dataset
@@ -32,11 +32,11 @@ To accelerate the training process, we pre-processed the dataset and stored the 
 ### Pre-processing and training files
 1. Data fetching and cleaning - [convert_to_zone_xx.ipynb](notebooks/convert_to_zone_xx.ipynb)+[EDA_activetime_dist.ipynb](notebooks/EDA_activetime_dist.ipynb). The file contains all the data cleaning process and visualization of some raw features, such as driver income, trip time, trip distance, etc. We stored our the dataset into a database on AWS after converting coordinates to taxi zones. An example of acceessing the database is in [Accessing database.ipynb](notebooks/Accessing database.ipynb). Note that the database may be unavailable in the future. If that is the case, you can still access the dataset by using the link provided above and get the cleaned dataset by making some changes to those notebooks
 
-2. Computation - files starts with "compute_" in "/notebook". Those files process the cleaned dataset to produce the estimation of values that are used for setting up the reinforcement learning environment, and prepare the dataset in SARSA algorithm format for training the model
+2. Computation - files starts with "compute_" in "/notebooks". Those files process the cleaned dataset to produce the estimation of values that are used for setting up the reinforcement learning environment, and prepare the dataset in SARSA algorithm format for training the model
 
-3. Visualization - files starts with "EDA_" in "/notebook". Those files shows the visualization of processed features such as cruise time and repositioning decisions
+3. Visualization - files starts with "EDA_" in "/notebooks". Those files shows the visualization of processed features such as cruise time and repositioning decisions
 
-4. Result - [OUTPUT_training_report.ipynb](notebook/OUTPUT_training_report.ipynb)+[interactive_q_plot.ipynb](notebook/interactive_q_plot.ipynb)+[train.ipynb](./train.ipynb). Those files shows the model convergence and optimal policy, and evaluate drivers' income
+4. Result - [OUTPUT_training_report.ipynb](notebooks/OUTPUT_training_report.ipynb)+[interactive_q_plot.ipynb](notebooks/interactive_q_plot.ipynb)+[train.ipynb](./train.ipynb). Those files shows the model convergence and optimal policy, and evaluate drivers' income
 
 ### Functional files
 - [empirical_training.py](./empirical_training.py) - implementing training process
