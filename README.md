@@ -47,9 +47,6 @@ To accelerate the training process, we pre-processed the dataset and stored the 
 - [plotting.py](./plotting.py) - supportive functions for SARSA
 - [utils.py](./utils.py) - supportive functions for plotting training results 
 
-## Software Requirements
-To do
-
 ## Acknowledgements
 We would like to express our gratitude to [Vineet Goyal](http://www.columbia.edu/~vg2277/), [Zhiwei Qin](https://www.linkedin.com/in/ztqin), [Shuaiji Li](https://www.linkedin.com/in/shuaiji) and [Qun Li](https://cn.linkedin.com/in/tracy-li-15766142) for mentoring us through-out the term. They have guided us in each phase of the projectand provided invaluable advice when we encountered technical obstacles. We would also love to thank Sining Chen, AdamKelleher and Eleni Drinea for organizing this capstone projectand providing us with this unique opportunity to apply theoryto practice.
 
